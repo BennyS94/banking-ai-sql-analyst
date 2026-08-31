@@ -251,6 +251,30 @@ REJECTED_SQL_CORPUS = (
         "SELECT value FROM (SELECT PG_SLEEP(1) AS value) AS nested",
         SQLSafetyReasonCode.FORBIDDEN_FUNCTION,
     ),
+    _rejected(
+        "locking_for_update",
+        "row_locking",
+        "SELECT * FROM banking.accounts FOR UPDATE",
+        SQLSafetyReasonCode.ADMINISTRATIVE_STATEMENT,
+    ),
+    _rejected(
+        "locking_for_no_key_update",
+        "row_locking",
+        "SELECT * FROM banking.accounts FOR NO KEY UPDATE",
+        SQLSafetyReasonCode.ADMINISTRATIVE_STATEMENT,
+    ),
+    _rejected(
+        "locking_for_share",
+        "row_locking",
+        "SELECT * FROM banking.accounts FOR SHARE",
+        SQLSafetyReasonCode.ADMINISTRATIVE_STATEMENT,
+    ),
+    _rejected(
+        "locking_for_key_share",
+        "row_locking",
+        "SELECT * FROM banking.accounts FOR KEY SHARE",
+        SQLSafetyReasonCode.ADMINISTRATIVE_STATEMENT,
+    ),
 )
 
 
@@ -319,6 +343,7 @@ class AdversarialSQLSafetyCorpusTests(TestCase):
                 "unknown_object",
                 "function_abuse",
                 "obfuscation",
+                "row_locking",
             },
         )
 

@@ -48,6 +48,7 @@ _DDL_NODES = (exp.Create, exp.Drop, exp.Alter, exp.TruncateTable)
 _ADMINISTRATIVE_NODES = (
     exp.Copy,
     exp.Command,
+    exp.Lock,
     exp.Set,
     exp.Transaction,
     exp.Commit,

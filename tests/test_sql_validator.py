@@ -100,6 +100,8 @@ class SQLASTValidatorTests(TestCase):
             "REVOKE SELECT ON banking.accounts FROM public",
             "VACUUM banking.accounts",
             "ANALYZE banking.accounts",
+            "SELECT * FROM banking.accounts FOR UPDATE",
+            "SELECT * FROM banking.accounts FOR SHARE",
         )
 
         for sql in cases:
