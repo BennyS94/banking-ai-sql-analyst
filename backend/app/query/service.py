@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict
 
 from backend.app.ai.groq_client import GenerationMetadata
 from backend.app.ai.service import NLToSQLGenerationResult
-from backend.app.db.query_executor import QueryResult
+from backend.app.db.query_executor import QueryExecutionError, QueryResult
 from backend.app.safety.sql_validator import (
     SQLSafetyReasonCode,
     SQLValidationResult,
@@ -27,6 +27,10 @@ class QuerySafetyError(RuntimeError):
         self.reason_code = reason_code
 
 
+class QueryRepairError(RuntimeError):
+    """Raised when the single repair generation cannot produce executable SQL."""
+
+
 class SafeQueryResult(BaseModel):
     """Internal semantic, generation and optional execution result."""
 
@@ -37,10 +41,18 @@ class SafeQueryResult(BaseModel):
     message: str | None
     generation_metadata: GenerationMetadata
     query_result: QueryResult | None = None
+    repair_used: bool = False
+    initial_sql: str | None = None
+    initial_generation_metadata: GenerationMetadata | None = None
+    initial_execution_error: str | None = None
 
 
 class _GenerationService(Protocol):
     def generate(self, question: str) -> NLToSQLGenerationResult: ...
+
+    def repair(
+        self, question: str, previous_sql: str, sanitized_error: str
+    ) -> NLToSQLGenerationResult: ...
 
 
 class _StructuralValidator(Protocol):
@@ -94,12 +106,13 @@ class SafeQueryService:
         if sql is None:  # The Phase 3 structured contract makes this unreachable.
             raise RuntimeError("Answerable generation did not contain SQL")
 
-        structural_result = self._structural_validator.validate(sql)
-        self._require_safe(structural_result, generation.metadata)
-        access_result = self._access_policy.validate(structural_result)
-        self._require_safe(access_result, generation.metadata)
+        try:
+            query_result = self._validate_and_execute(sql, generation.metadata)
+        except QueryExecutionError as exc:
+            if not exc.repair_eligible:
+                raise
+            return self._repair_once(question, sql, generation, exc)
 
-        query_result = self._query_executor.execute(sql)
         logger.info(
             "Banking query executed safely",
             extra={
@@ -117,6 +130,61 @@ class SafeQueryService:
             generation_metadata=generation.metadata,
             query_result=query_result,
         )
+
+    def _repair_once(
+        self,
+        question: str,
+        initial_sql: str,
+        initial_generation: NLToSQLGenerationResult,
+        initial_error: QueryExecutionError,
+    ) -> SafeQueryResult:
+        logger.info(
+            "Attempting one SQL correctness repair",
+            extra={"generation_model": initial_generation.metadata.model},
+        )
+        repaired_generation = self._generation_service.repair(
+            question,
+            initial_sql,
+            initial_error.repair_detail,
+        )
+        repaired_output = repaired_generation.output
+        if repaired_output.status != "answerable" or repaired_output.sql is None:
+            raise QueryRepairError("SQL repair did not produce an answerable query")
+
+        repaired_sql = repaired_output.sql
+        repaired_result = self._validate_and_execute(
+            repaired_sql, repaired_generation.metadata
+        )
+        logger.info(
+            "Repaired banking query executed safely",
+            extra={
+                "generation_model": repaired_generation.metadata.model,
+                "execution_ms": repaired_result.execution_ms,
+                "returned_row_count": repaired_result.row_count,
+                "result_truncated": repaired_result.truncated,
+                "repair_used": True,
+            },
+        )
+        return SafeQueryResult(
+            status="answerable",
+            sql=repaired_sql,
+            message=None,
+            generation_metadata=repaired_generation.metadata,
+            query_result=repaired_result,
+            repair_used=True,
+            initial_sql=initial_sql,
+            initial_generation_metadata=initial_generation.metadata,
+            initial_execution_error=initial_error.repair_detail,
+        )
+
+    def _validate_and_execute(
+        self, sql: str, metadata: GenerationMetadata
+    ) -> QueryResult:
+        structural_result = self._structural_validator.validate(sql)
+        self._require_safe(structural_result, metadata)
+        access_result = self._access_policy.validate(structural_result)
+        self._require_safe(access_result, metadata)
+        return self._query_executor.execute(sql)
 
     @staticmethod
     def _require_safe(

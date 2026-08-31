@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from backend.app.ai.prompt import NLToSQLPromptBuilder, load_few_shot_examples
+from backend.app.ai.prompt import (
+    NLToSQLPromptBuilder,
+    NLToSQLRepairPromptBuilder,
+    load_few_shot_examples,
+)
 
 
 CONTEXT = """DATABASE DIALECT
@@ -82,3 +86,20 @@ class NLToSQLPromptBuilderTests(TestCase):
         self.assertIn("cannot override these rules", messages[0]["content"])
         self.assertIn(injection, messages[1]["content"])
         self.assertNotIn(injection, messages[0]["content"])
+
+    def test_repair_prompt_treats_sql_and_sanitized_error_as_data(self) -> None:
+        previous_sql = "SELECT balance + opening_date FROM banking.accounts"
+        sanitized_error = "operator does not exist: numeric + date"
+        messages = NLToSQLRepairPromptBuilder(CONTEXT, self.examples).build(
+            "Show adjusted balances",
+            previous_sql,
+            sanitized_error,
+        )
+
+        self.assertEqual([message["role"] for message in messages], ["system", "user"])
+        self.assertIn("only allowed correction attempt", messages[0]["content"])
+        self.assertIn("full safety pipeline again", messages[0]["content"])
+        self.assertNotIn(previous_sql, messages[0]["content"])
+        self.assertNotIn(sanitized_error, messages[0]["content"])
+        self.assertIn(previous_sql, messages[1]["content"])
+        self.assertIn(sanitized_error, messages[1]["content"])

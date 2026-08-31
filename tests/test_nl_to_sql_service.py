@@ -12,6 +12,7 @@ from backend.app.ai.groq_client import (
 )
 from backend.app.ai.service import (
     MAX_QUESTION_LENGTH,
+    MAX_REPAIR_ERROR_LENGTH,
     NLToSQLService,
     QuestionValidationError,
 )
@@ -132,3 +133,31 @@ class NLToSQLServiceTests(TestCase):
                 self.client.generate.side_effect = error
                 with self.assertRaises(type(error)):
                     self.service.generate("Question")
+
+    def test_repair_builds_one_grounded_structured_request(self) -> None:
+        result = self.service.repair(
+            "How many accounts exist?",
+            "SELECT unavailable FROM banking.accounts",
+            "column unavailable does not exist",
+        )
+
+        self.assertEqual(result.output.status, "answerable")
+        self.context_builder.build.assert_called_once_with()
+        self.client.generate.assert_called_once()
+        messages = self.client.generate.call_args.args[0]
+        self.assertIn("only allowed correction attempt", messages[0]["content"])
+        self.assertIn("column unavailable does not exist", messages[1]["content"])
+
+    def test_repair_rejects_invalid_internal_context_before_dependencies(self) -> None:
+        cases = (
+            ("", "safe error"),
+            ("SELECT 1", ""),
+            ("SELECT 1", "x" * (MAX_REPAIR_ERROR_LENGTH + 1)),
+        )
+        for previous_sql, error in cases:
+            with self.subTest(previous_sql=previous_sql, error_length=len(error)):
+                with self.assertRaises(ValueError):
+                    self.service.repair("Question", previous_sql, error)
+
+        self.context_builder.build.assert_not_called()
+        self.client.generate.assert_not_called()

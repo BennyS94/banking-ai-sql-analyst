@@ -11,10 +11,11 @@ from backend.app.ai.groq_client import (
     ProviderGenerationResult,
     StructuredGeneration,
 )
-from backend.app.ai.prompt import NLToSQLPromptBuilder
+from backend.app.ai.prompt import NLToSQLPromptBuilder, NLToSQLRepairPromptBuilder
 
 
 MAX_QUESTION_LENGTH = 2_000
+MAX_REPAIR_ERROR_LENGTH = 500
 
 
 class QuestionValidationError(ValueError):
@@ -56,6 +57,35 @@ class NLToSQLService:
         _validate_question(question)
         context = self._context_builder.build()
         messages = NLToSQLPromptBuilder(context).build(question)
+        provider_result = self._generation_client.generate(messages)
+        return NLToSQLGenerationResult(
+            output=provider_result.output,
+            metadata=provider_result.metadata,
+        )
+
+    def repair(
+        self,
+        question: str,
+        previous_sql: str,
+        sanitized_error: str,
+    ) -> NLToSQLGenerationResult:
+        """Request one structured correction without executing or trusting it."""
+        _validate_question(question)
+        if not isinstance(previous_sql, str) or not previous_sql.strip():
+            raise ValueError("Previous SQL must be non-empty")
+        if (
+            not isinstance(sanitized_error, str)
+            or not sanitized_error.strip()
+            or len(sanitized_error) > MAX_REPAIR_ERROR_LENGTH
+        ):
+            raise ValueError("Sanitized database error must be 1 to 500 characters")
+
+        context = self._context_builder.build()
+        messages = NLToSQLRepairPromptBuilder(context).build(
+            question,
+            previous_sql,
+            sanitized_error,
+        )
         provider_result = self._generation_client.generate(messages)
         return NLToSQLGenerationResult(
             output=provider_result.output,

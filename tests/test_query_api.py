@@ -34,7 +34,7 @@ from backend.app.db.query_executor import (
 )
 from backend.app.db.schema import ColumnSchema, DatabaseSchema, TableSchema
 from backend.app.main import create_app
-from backend.app.query.service import SafeQueryService
+from backend.app.query.service import QueryRepairError, QuerySafetyError, SafeQueryService
 from backend.app.safety.access_policy import BankingSQLAccessPolicy
 from backend.app.safety.sql_validator import SQLASTValidator
 from banking_data.loading import load_processed_data
@@ -54,6 +54,9 @@ GENERATION_METADATA = GenerationMetadata(
     input_tokens=100,
     output_tokens=25,
     finish_reason="stop",
+)
+REPAIR_METADATA = GENERATION_METADATA.model_copy(
+    update={"latency_ms": 8.0, "provider_request_id": "repair-request-1"}
 )
 
 
@@ -82,6 +85,7 @@ def _generation(
     status: str = "answerable",
     *,
     sql: str | None = "SELECT account_id, balance FROM banking.accounts",
+    metadata: GenerationMetadata = GENERATION_METADATA,
 ) -> NLToSQLGenerationResult:
     if status == "answerable":
         output = StructuredGeneration(
@@ -95,7 +99,7 @@ def _generation(
         )
     return NLToSQLGenerationResult(
         output=output,
-        metadata=GENERATION_METADATA,
+        metadata=metadata,
     )
 
 
@@ -107,6 +111,14 @@ def _query_result(*, truncated: bool = False) -> QueryResult:
         truncated=truncated,
         execution_ms=4.5,
         statement_timeout_ms=5_000,
+    )
+
+
+def _execution_error(*, repair_eligible: bool) -> QueryExecutionError:
+    return QueryExecutionError(
+        "Database query execution failed",
+        repair_detail="operator does not exist: numeric + date",
+        repair_eligible=repair_eligible,
     )
 
 
@@ -148,6 +160,7 @@ class QueryApiTests(IsolatedAsyncioTestCase):
         self.assertEqual(payload["rows"], [[1, "10.25"]])
         self.assertEqual(payload["returned_row_count"], 1)
         self.assertFalse(payload["truncated"])
+        self.assertFalse(payload["repair_used"])
         self.assertEqual(payload["generation"]["model"], "openai/gpt-oss-120b")
         self.assertEqual(
             payload["execution"],
@@ -194,6 +207,7 @@ class QueryApiTests(IsolatedAsyncioTestCase):
                 self.assertEqual(payload["rows"], [])
                 self.assertEqual(payload["returned_row_count"], 0)
                 self.assertIsNone(payload["execution"])
+                self.assertFalse(payload["repair_used"])
                 self.executor.execute.assert_not_called()
 
     async def test_unsafe_and_unknown_generated_sql_never_executes(self) -> None:
@@ -283,6 +297,152 @@ class QueryApiTests(IsolatedAsyncioTestCase):
         )
         self.assertEqual(raw_sql.status_code, 422)
         self.assertIn("extra_forbidden", raw_sql.text)
+
+    async def test_failed_repair_maps_to_a_controlled_outcome(self) -> None:
+        self.executor.execute.side_effect = _execution_error(
+            repair_eligible=True
+        )
+        self.generation_service.repair.return_value = _generation(
+            "unanswerable", sql=None, metadata=REPAIR_METADATA
+        )
+
+        response = await self._post({"question": "Question"})
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.json()["detail"]["category"], "query_repair_failed"
+        )
+        self.generation_service.repair.assert_called_once()
+
+
+class SafeQueryRepairTests(TestCase):
+    def setUp(self) -> None:
+        self.initial_sql = "SELECT balance / account_id FROM banking.accounts"
+        self.repaired_sql = (
+            "SELECT balance / NULLIF(account_id, 0) FROM banking.accounts"
+        )
+        self.generation_service = mock.Mock()
+        self.generation_service.generate.return_value = _generation(
+            sql=self.initial_sql
+        )
+        self.generation_service.repair.return_value = _generation(
+            sql=self.repaired_sql,
+            metadata=REPAIR_METADATA,
+        )
+        self.executor = mock.Mock()
+        self.service = SafeQueryService(
+            self.generation_service,
+            SQLASTValidator(),
+            BankingSQLAccessPolicy(QUERY_SCHEMA),
+            self.executor,
+        )
+
+    def test_eligible_failure_repairs_once_and_revalidates_before_execution(self) -> None:
+        self.executor.execute.side_effect = (
+            _execution_error(repair_eligible=True),
+            _query_result(),
+        )
+
+        result = self.service.query("Safely divide balances")
+
+        self.assertTrue(result.repair_used)
+        self.assertEqual(result.sql, self.repaired_sql)
+        self.assertEqual(result.generation_metadata, REPAIR_METADATA)
+        self.assertEqual(result.initial_sql, self.initial_sql)
+        self.assertEqual(result.initial_generation_metadata, GENERATION_METADATA)
+        self.assertEqual(
+            result.initial_execution_error,
+            "operator does not exist: numeric + date",
+        )
+        self.generation_service.repair.assert_called_once_with(
+            "Safely divide balances",
+            self.initial_sql,
+            "operator does not exist: numeric + date",
+        )
+        self.assertEqual(
+            self.executor.execute.call_args_list,
+            [mock.call(self.initial_sql), mock.call(self.repaired_sql)],
+        )
+
+    def test_second_execution_failure_stops_without_another_repair(self) -> None:
+        self.executor.execute.side_effect = (
+            _execution_error(repair_eligible=True),
+            _execution_error(repair_eligible=True),
+        )
+
+        with self.assertRaises(QueryExecutionError):
+            self.service.query("Question")
+
+        self.generation_service.repair.assert_called_once()
+        self.assertEqual(self.executor.execute.call_count, 2)
+
+    def test_security_rejection_never_triggers_repair_or_execution(self) -> None:
+        self.generation_service.generate.return_value = _generation(
+            sql="DELETE FROM banking.accounts"
+        )
+
+        with self.assertRaises(QuerySafetyError):
+            self.service.query("Delete accounts")
+
+        self.generation_service.repair.assert_not_called()
+        self.executor.execute.assert_not_called()
+
+    def test_noneligible_execution_failure_never_triggers_repair(self) -> None:
+        error = _execution_error(repair_eligible=False)
+        self.executor.execute.side_effect = error
+
+        with self.assertRaises(QueryExecutionError) as caught:
+            self.service.query("Question")
+
+        self.assertIs(caught.exception, error)
+        self.generation_service.repair.assert_not_called()
+        self.assertEqual(self.executor.execute.call_count, 1)
+
+    def test_unsafe_repaired_sql_is_rejected_without_second_execution(self) -> None:
+        self.executor.execute.side_effect = _execution_error(
+            repair_eligible=True
+        )
+        self.generation_service.repair.return_value = _generation(
+            sql="SELECT account_id FROM banking.accounts; "
+            "DELETE FROM banking.accounts",
+            metadata=REPAIR_METADATA,
+        )
+
+        with self.assertRaises(QuerySafetyError):
+            self.service.query("Question")
+
+        self.generation_service.repair.assert_called_once()
+        self.assertEqual(self.executor.execute.call_count, 1)
+
+    def test_non_answerable_initial_generation_never_repairs(self) -> None:
+        for semantic_status in ("unanswerable", "ambiguous"):
+            with self.subTest(status=semantic_status):
+                self.generation_service.reset_mock()
+                self.executor.reset_mock()
+                self.generation_service.generate.return_value = _generation(
+                    semantic_status, sql=None
+                )
+
+                result = self.service.query("Question")
+
+                self.assertEqual(result.status, semantic_status)
+                self.assertFalse(result.repair_used)
+                self.generation_service.repair.assert_not_called()
+                self.executor.execute.assert_not_called()
+
+    def test_non_answerable_repair_stops_without_semantic_conversion(self) -> None:
+        self.executor.execute.side_effect = _execution_error(
+            repair_eligible=True
+        )
+        self.generation_service.repair.return_value = _generation(
+            "ambiguous", sql=None, metadata=REPAIR_METADATA
+        )
+
+        with self.assertRaises(QueryRepairError):
+            self.service.query("Question")
+
+        self.generation_service.repair.assert_called_once()
+        self.assertEqual(self.executor.execute.call_count, 1)
 
 
 class QueryDependencyTests(TestCase):
@@ -395,3 +555,43 @@ class QueryApiPostgresIntegrationTests(IsolatedAsyncioTestCase):
         self.assertEqual(payload["returned_row_count"], 1)
         self.assertFalse(payload["truncated"])
         self.assertEqual(payload["execution"]["statement_timeout_ms"], 5_000)
+
+    async def test_one_repair_restarts_and_passes_real_safety_execution(self) -> None:
+        generation_service = mock.Mock()
+        initial_sql = (
+            "SELECT balance + opening_date AS invalid_value "
+            "FROM banking.accounts"
+        )
+        repaired_sql = (
+            "SELECT account_id, balance FROM banking.accounts "
+            "ORDER BY account_id"
+        )
+        generation_service.generate.return_value = _generation(sql=initial_sql)
+        generation_service.repair.return_value = _generation(
+            sql=repaired_sql, metadata=REPAIR_METADATA
+        )
+        service = SafeQueryService(
+            generation_service,
+            SQLASTValidator(),
+            BankingSQLAccessPolicy.from_engine(self.engine),
+            ReadOnlyQueryExecutor(self.engine),
+        )
+        application = create_app(Settings(_env_file=None))
+        application.dependency_overrides[get_safe_query_service] = lambda: service
+
+        async with AsyncClient(
+            transport=ASGITransport(app=application), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/api/v1/query", json={"question": "List account balances"}
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["repair_used"])
+        self.assertEqual(payload["sql"], repaired_sql)
+        self.assertEqual(payload["rows"], [[1, "-10.25"]])
+        self.assertEqual(
+            payload["generation"]["provider_request_id"], "repair-request-1"
+        )
+        generation_service.repair.assert_called_once()

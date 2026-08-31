@@ -36,6 +36,7 @@ class QueryResponse(BaseModel):
     truncated: bool
     generation: GenerationMetadata
     execution: ExecutionMetadataResponse | None
+    repair_used: bool
 
     @classmethod
     def from_result(cls, result: SafeQueryResult) -> "QueryResponse":
@@ -49,6 +50,7 @@ class QueryResponse(BaseModel):
             returned_row_count=query_result.row_count if query_result else 0,
             truncated=query_result.truncated if query_result else False,
             generation=result.generation_metadata,
+            repair_used=result.repair_used,
             execution=(
                 ExecutionMetadataResponse(
                     execution_ms=query_result.execution_ms,

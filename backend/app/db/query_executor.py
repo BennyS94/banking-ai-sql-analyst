@@ -25,6 +25,23 @@ from backend.app.core.config import (
 
 logger = logging.getLogger(__name__)
 NormalizedValue = int | float | str | bool | None
+REPAIR_ELIGIBLE_SQLSTATES = frozenset(
+    {
+        "21000",  # cardinality_violation
+        "22007",  # invalid_datetime_format
+        "22008",  # datetime_field_overflow
+        "22012",  # division_by_zero
+        "22P02",  # invalid_text_representation
+        "42601",  # syntax_error
+        "42703",  # undefined_column
+        "42803",  # grouping_error
+        "42804",  # datatype_mismatch
+        "42846",  # cannot_coerce
+        "42883",  # undefined_function/operator
+        "42P01",  # undefined_table
+        "42P10",  # invalid_column_reference
+    }
+)
 
 
 class QueryExecutorError(RuntimeError):
@@ -42,9 +59,16 @@ class QueryDatabaseError(QueryExecutorError):
 class QueryExecutionError(QueryExecutorError):
     """Raised when PostgreSQL rejects an approved internal query."""
 
-    def __init__(self, message: str, *, repair_detail: str) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        repair_detail: str,
+        repair_eligible: bool = False,
+    ) -> None:
         super().__init__(message)
         self.repair_detail = repair_detail
+        self.repair_eligible = repair_eligible
 
 
 class QueryResultNormalizationError(RuntimeError):
@@ -142,6 +166,7 @@ def _raise_classified_execution_error(exc: SQLAlchemyError) -> None:
     raise QueryExecutionError(
         "Database query execution failed",
         repair_detail=_sanitized_repair_detail(exc),
+        repair_eligible=sqlstate in REPAIR_ELIGIBLE_SQLSTATES,
     ) from exc
 
 

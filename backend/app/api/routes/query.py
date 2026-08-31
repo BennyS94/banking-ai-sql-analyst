@@ -24,7 +24,11 @@ from backend.app.db.query_executor import (
     QueryTimeoutError,
 )
 from backend.app.db.schema import SchemaIntrospectionError
-from backend.app.query.service import QuerySafetyError, SafeQueryService
+from backend.app.query.service import (
+    QueryRepairError,
+    QuerySafetyError,
+    SafeQueryService,
+)
 
 
 router = APIRouter(prefix="/api/v1", tags=["queries"])
@@ -97,6 +101,12 @@ def query_banking_data(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             "query_execution_error",
             "The generated query could not be executed",
+        ) from exc
+    except QueryRepairError as exc:
+        raise query_http_error(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "query_repair_failed",
+            "The generated query could not be corrected",
         ) from exc
     except (QueryDatabaseError, SchemaIntrospectionError) as exc:
         raise query_http_error(

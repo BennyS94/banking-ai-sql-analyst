@@ -186,11 +186,12 @@ class ReadOnlyQueryExecutorTests(TestCase):
 
     def test_direct_mutation_bypass_is_denied_and_data_is_unchanged(self) -> None:
         with mock.patch("backend.app.db.query_executor.logger.exception"):
-            with self.assertRaises(QueryExecutionError):
+            with self.assertRaises(QueryExecutionError) as caught:
                 self.executor.execute(
                     "UPDATE banking.accounts SET balance = 0 WHERE account_id = 1"
                 )
 
+        self.assertFalse(caught.exception.repair_eligible)
         result = self.executor.execute(
             "SELECT balance FROM banking.accounts WHERE account_id = 1"
         )
@@ -213,6 +214,7 @@ class ReadOnlyQueryExecutorTests(TestCase):
         self.assertEqual(str(caught.exception), "Database query execution failed")
         self.assertNotIn("unavailable_column", str(caught.exception))
         self.assertIn("unavailable_column", caught.exception.repair_detail)
+        self.assertTrue(caught.exception.repair_eligible)
         self.assertEqual(self.engine.pool.checkedout(), 0)
 
     def test_connectivity_failure_has_a_distinct_sanitized_error(self) -> None:
