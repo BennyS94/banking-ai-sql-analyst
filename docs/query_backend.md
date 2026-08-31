@@ -28,7 +28,8 @@ The runtime engine is synchronous SQLAlchemy 2.x. Connectivity checks execute a
 trivial read and return only the effective user and database name. Failures are
 reported through a controlled application exception without returning a URL or
 password. Connections used through the FastAPI dependency are always returned
-to the pool when the request ends.
+to the pool when the request ends. FastAPI's lifespan disposes the cached
+runtime engine at application shutdown without initializing an unused engine.
 
 ## Banking schema introspection
 
