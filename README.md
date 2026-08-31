@@ -45,3 +45,6 @@ Local PostgreSQL setup and lifecycle commands are documented in
 
 The approved relational schema and Alembic migration commands are documented in
 [`docs/database_schema.md`](docs/database_schema.md).
+
+The transactional processed-data loading workflow is documented in
+[`docs/data_loading.md`](docs/data_loading.md).
