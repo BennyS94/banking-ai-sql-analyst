@@ -1,0 +1,82 @@
+[
+  {
+    "id": "filter_active_accounts",
+    "language": "en",
+    "question": "List the account IDs and balances of active accounts.",
+    "output": {
+      "status": "answerable",
+      "sql": "SELECT a.account_id, a.balance FROM banking.accounts AS a JOIN banking.account_statuses AS s ON s.account_status_id = a.account_status_id WHERE s.status_name = 'Active' ORDER BY a.account_id",
+      "message": null
+    }
+  },
+  {
+    "id": "aggregation_account_type",
+    "language": "en",
+    "question": "What is the average recorded balance for each account type?",
+    "output": {
+      "status": "answerable",
+      "sql": "SELECT t.type_name, AVG(a.balance) AS average_balance FROM banking.accounts AS a JOIN banking.account_types AS t ON t.account_type_id = a.account_type_id GROUP BY t.type_name ORDER BY t.type_name",
+      "message": null
+    }
+  },
+  {
+    "id": "join_closed_customers",
+    "language": "en",
+    "question": "Which customers have at least one closed account?",
+    "output": {
+      "status": "answerable",
+      "sql": "SELECT DISTINCT c.customer_id, c.first_name, c.last_name FROM banking.customers AS c JOIN banking.accounts AS a ON a.customer_id = c.customer_id JOIN banking.account_statuses AS s ON s.account_status_id = a.account_status_id WHERE s.status_name = 'Closed' ORDER BY c.customer_id",
+      "message": null
+    }
+  },
+  {
+    "id": "multijoin_branch_deposits",
+    "language": "en",
+    "question": "Show the summed deposit amount by branch and branch city.",
+    "output": {
+      "status": "answerable",
+      "sql": "SELECT b.branch_id, b.branch_name, ad.city, SUM(tr.amount) AS deposit_amount FROM banking.transactions AS tr JOIN banking.transaction_types AS tt ON tt.transaction_type_id = tr.transaction_type_id JOIN banking.branches AS b ON b.branch_id = tr.branch_id JOIN banking.addresses AS ad ON ad.address_id = b.address_id WHERE tt.type_name = 'Deposit' GROUP BY b.branch_id, b.branch_name, ad.city ORDER BY b.branch_id",
+      "message": null
+    }
+  },
+  {
+    "id": "temporal_romanian",
+    "language": "ro",
+    "question": "Arată tranzacțiile efectuate în luna ianuarie 2025.",
+    "output": {
+      "status": "answerable",
+      "sql": "SELECT tr.transaction_id, tr.transaction_date, tr.amount FROM banking.transactions AS tr WHERE tr.transaction_date >= TIMESTAMP '2025-01-01 00:00:00' AND tr.transaction_date < TIMESTAMP '2025-02-01 00:00:00' ORDER BY tr.transaction_date, tr.transaction_id",
+      "message": null
+    }
+  },
+  {
+    "id": "top_accounts_romanian",
+    "language": "ro",
+    "question": "Care sunt primele cinci conturi după soldul înregistrat?",
+    "output": {
+      "status": "answerable",
+      "sql": "SELECT a.account_id, a.balance FROM banking.accounts AS a ORDER BY a.balance DESC, a.account_id LIMIT 5",
+      "message": null
+    }
+  },
+  {
+    "id": "unanswerable_credit_score",
+    "language": "en",
+    "question": "Which customers have a credit score above 750?",
+    "output": {
+      "status": "unanswerable",
+      "sql": null,
+      "message": "The banking dataset does not contain customer credit scores."
+    }
+  },
+  {
+    "id": "ambiguous_important_accounts",
+    "language": "en",
+    "question": "Which accounts are the most important?",
+    "output": {
+      "status": "ambiguous",
+      "sql": null,
+      "message": "Please define important accounts, for example by recorded balance or transaction count."
+    }
+  }
+]
