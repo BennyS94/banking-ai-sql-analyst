@@ -6,12 +6,22 @@ from unittest import TestCase, mock
 
 from backend.app.ai.groq_client import GenerationMetadata, StructuredGeneration
 from backend.app.ai.service import NLToSQLGenerationResult
-from backend.app.ai.smoke import SMOKE_CASES, main
+from backend.app.ai.smoke import SMOKE_CASES, _configure_utf8_output, main
 from backend.app.core.config import Settings
 from backend.app.db.query_executor import ReadOnlyQueryExecutor
 
 
 class LiveAISmokeCommandTests(TestCase):
+    def test_console_streams_are_configured_for_romanian_output(self) -> None:
+        stdout = mock.Mock()
+        stderr = mock.Mock()
+
+        with mock.patch("sys.stdout", stdout), mock.patch("sys.stderr", stderr):
+            _configure_utf8_output()
+
+        stdout.reconfigure.assert_called_once_with(encoding="utf-8")
+        stderr.reconfigure.assert_called_once_with(encoding="utf-8")
+
     def test_smoke_set_covers_required_categories_and_languages(self) -> None:
         categories = {case.category for case in SMOKE_CASES}
         languages = {case.language for case in SMOKE_CASES}

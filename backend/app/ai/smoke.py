@@ -92,6 +92,7 @@ SMOKE_CASES = (
 
 def main() -> int:
     """Run live generation cases and print one inspectable JSON object per case."""
+    _configure_utf8_output()
     settings = get_settings()
     engine = None
     try:
@@ -141,6 +142,14 @@ def main() -> int:
         if engine is not None:
             engine.dispose()
     return 0
+
+
+def _configure_utf8_output() -> None:
+    """Keep Romanian smoke output printable on legacy Windows consoles."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8")
 
 
 if __name__ == "__main__":
