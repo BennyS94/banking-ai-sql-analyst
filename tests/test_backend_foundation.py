@@ -30,12 +30,16 @@ class BackendFoundationTests(TestCase):
         environment = {
             "APP_TITLE": "Environment Banking API",
             "APP_VERSION": "2.1.0",
+            "QUERY_STATEMENT_TIMEOUT_MS": "2500",
+            "QUERY_MAX_ROWS": "125",
         }
         with mock.patch.dict(os.environ, environment, clear=False):
             settings = Settings()
 
         self.assertEqual(settings.app_title, "Environment Banking API")
         self.assertEqual(settings.app_version, "2.1.0")
+        self.assertEqual(settings.query_statement_timeout_ms, 2_500)
+        self.assertEqual(settings.query_max_rows, 125)
 
     def test_repeated_cleanup_without_initialized_engine_is_safe(self) -> None:
         get_runtime_engine.cache_clear()

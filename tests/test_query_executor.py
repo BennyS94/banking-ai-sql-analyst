@@ -10,12 +10,18 @@ from alembic import command
 from alembic.config import Config
 import psycopg
 from psycopg import sql
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
+from sqlalchemy.exc import OperationalError
 
 from backend.app.core.config import Settings
 from backend.app.db.engine import create_runtime_engine
-from backend.app.db.query_executor import QueryExecutionError, ReadOnlyQueryExecutor
+from backend.app.db.query_executor import (
+    QueryDatabaseError,
+    QueryExecutionError,
+    QueryTimeoutError,
+    ReadOnlyQueryExecutor,
+)
 from banking_data.loading import load_processed_data
 from banking_data.role_management import (
     _psycopg_connection_string,
@@ -80,6 +86,8 @@ class ReadOnlyQueryExecutorTests(TestCase):
         self.assertEqual(result.columns, ("account_id", "balance", "opening_date"))
         self.assertEqual(result.rows, ((1, "-10.25", "2020-01-03"),))
         self.assertEqual(result.row_count, 1)
+        self.assertFalse(result.truncated)
+        self.assertEqual(result.statement_timeout_ms, 5_000)
         self.assertGreaterEqual(result.execution_ms, 0.0)
         self.assertEqual(
             result.model_dump(mode="json")["rows"],
@@ -122,6 +130,71 @@ class ReadOnlyQueryExecutorTests(TestCase):
         self.assertEqual(result.columns, ("customer_id", "first_name"))
         self.assertEqual(result.rows, ())
         self.assertEqual(result.row_count, 0)
+        self.assertFalse(result.truncated)
+
+    def test_result_fetching_is_bounded_and_reports_truncation(self) -> None:
+        two_rows = ReadOnlyQueryExecutor(self.engine, max_rows=2).execute(
+            "SELECT value FROM (VALUES (1), (2)) AS items(value) ORDER BY value"
+        )
+        three_rows = ReadOnlyQueryExecutor(self.engine, max_rows=2).execute(
+            "SELECT value FROM (VALUES (1), (2), (3)) AS items(value) ORDER BY value"
+        )
+
+        self.assertEqual(two_rows.rows, ((1,), (2,)))
+        self.assertEqual(two_rows.row_count, 2)
+        self.assertFalse(two_rows.truncated)
+        self.assertEqual(three_rows.rows, ((1,), (2,)))
+        self.assertEqual(three_rows.row_count, 2)
+        self.assertTrue(three_rows.truncated)
+
+    def test_transaction_is_read_only_and_runtime_settings_are_local(self) -> None:
+        executor = ReadOnlyQueryExecutor(
+            self.engine, statement_timeout_ms=1_234
+        )
+        result = executor.execute(
+            "SELECT current_setting('transaction_read_only'), "
+            "current_setting('statement_timeout'), current_setting('search_path')"
+        )
+
+        self.assertEqual(
+            result.rows,
+            (("on", "1234ms", "banking, pg_catalog, pg_temp"),),
+        )
+        with self.engine.connect() as connection:
+            self.assertEqual(
+                connection.scalar(text("SHOW transaction_read_only")), "off"
+            )
+            self.assertNotEqual(
+                connection.scalar(text("SHOW statement_timeout")), "1234ms"
+            )
+
+    def test_statement_timeout_is_controlled_and_connection_recovers(self) -> None:
+        executor = ReadOnlyQueryExecutor(self.engine, statement_timeout_ms=10)
+        workload = (
+            "WITH RECURSIVE workload(n) AS ("
+            "SELECT 1 UNION ALL SELECT n + 1 FROM workload WHERE n < 100000000"
+            ") SELECT SUM(n) FROM workload"
+        )
+
+        with mock.patch("backend.app.db.query_executor.logger.exception"):
+            with self.assertRaises(QueryTimeoutError) as caught:
+                executor.execute(workload)
+
+        self.assertEqual(str(caught.exception), "Database query timed out")
+        self.assertEqual(self.engine.pool.checkedout(), 0)
+        self.assertEqual(executor.execute("SELECT 1").rows, ((1,),))
+
+    def test_direct_mutation_bypass_is_denied_and_data_is_unchanged(self) -> None:
+        with mock.patch("backend.app.db.query_executor.logger.exception"):
+            with self.assertRaises(QueryExecutionError):
+                self.executor.execute(
+                    "UPDATE banking.accounts SET balance = 0 WHERE account_id = 1"
+                )
+
+        result = self.executor.execute(
+            "SELECT balance FROM banking.accounts WHERE account_id = 1"
+        )
+        self.assertEqual(result.rows, (("-10.25",),))
 
     def test_executor_uses_reader_identity_and_releases_connection(self) -> None:
         self.assertEqual(self.engine.pool.checkedout(), 0)
@@ -139,4 +212,27 @@ class ReadOnlyQueryExecutorTests(TestCase):
 
         self.assertEqual(str(caught.exception), "Database query execution failed")
         self.assertNotIn("unavailable_column", str(caught.exception))
+        self.assertIn("unavailable_column", caught.exception.repair_detail)
         self.assertEqual(self.engine.pool.checkedout(), 0)
+
+    def test_connectivity_failure_has_a_distinct_sanitized_error(self) -> None:
+        engine = mock.Mock()
+        engine.connect.side_effect = OperationalError(
+            "connect failed with secret", {}, Exception("driver secret")
+        )
+        executor = ReadOnlyQueryExecutor(engine)
+
+        with mock.patch("backend.app.db.query_executor.logger.exception"):
+            with self.assertRaises(QueryDatabaseError) as caught:
+                executor.execute("SELECT 1")
+
+        self.assertEqual(
+            str(caught.exception), "Database query infrastructure failed"
+        )
+        self.assertNotIn("secret", str(caught.exception))
+
+    def test_executor_configuration_must_be_positive(self) -> None:
+        with self.assertRaises(ValueError):
+            ReadOnlyQueryExecutor(self.engine, statement_timeout_ms=0)
+        with self.assertRaises(ValueError):
+            ReadOnlyQueryExecutor(self.engine, max_rows=0)

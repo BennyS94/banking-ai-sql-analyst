@@ -2,8 +2,12 @@
 
 from functools import lru_cache
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+DEFAULT_QUERY_STATEMENT_TIMEOUT_MS = 5_000
+DEFAULT_QUERY_MAX_ROWS = 500
 
 
 class Settings(BaseSettings):
@@ -16,6 +20,10 @@ class Settings(BaseSettings):
     groq_reasoning_effort: str = "medium"
     banking_reader_user: str = "banking_reader"
     banking_reader_database_url: str | None = None
+    query_statement_timeout_ms: int = Field(
+        default=DEFAULT_QUERY_STATEMENT_TIMEOUT_MS, gt=0
+    )
+    query_max_rows: int = Field(default=DEFAULT_QUERY_MAX_ROWS, gt=0)
 
     model_config = SettingsConfigDict(
         env_file=".env",
