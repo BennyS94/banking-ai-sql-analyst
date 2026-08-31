@@ -3,11 +3,19 @@
 The project is intended to provide natural-language banking analytics by
 translating questions into validated, read-only PostgreSQL queries.
 
-Phase 1 currently implements the trusted data foundation: audited and cleaned
-banking data, PostgreSQL schema and migrations, transactional loading, a
+Phase 1 implements the trusted data foundation: audited and cleaned banking
+data, PostgreSQL schema and migrations, transactional loading, a
 least-privilege read-only database role, and end-to-end integrity validation.
-FastAPI, Groq-backed NL-to-SQL generation, SQL validation, Streamlit, and the
-final application flow are planned for later phases and are not implemented yet.
+Phase 2 is building the query backend. The FastAPI foundation currently exposes
+application-process health at `GET /health`. Groq-backed NL-to-SQL generation,
+SQL validation, Streamlit, and the final application flow are not implemented.
+
+Install the backend and test dependencies, then start the development API:
+
+```powershell
+python -m pip install -e ".[test]"
+python -m uvicorn backend.app.main:app --reload
+```
 
 ## Raw dataset audit
 

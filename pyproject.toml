@@ -8,10 +8,18 @@ version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
     "alembic>=1.18,<2",
+    "fastapi>=0.116,<1",
     "pandas>=2.2,<3",
+    "pydantic-settings>=2.10,<3",
     "psycopg[binary]>=3.3,<4",
     "SQLAlchemy>=2.0,<3",
+    "uvicorn>=0.35,<1",
 ]
 
-[tool.setuptools]
-packages = ["banking_data"]
+[project.optional-dependencies]
+test = [
+    "httpx>=0.28,<1",
+]
+
+[tool.setuptools.packages.find]
+include = ["backend*", "banking_data*"]
