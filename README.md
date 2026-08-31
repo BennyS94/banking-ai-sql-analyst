@@ -48,3 +48,6 @@ The approved relational schema and Alembic migration commands are documented in
 
 The transactional processed-data loading workflow is documented in
 [`docs/data_loading.md`](docs/data_loading.md).
+
+The PostgreSQL analytical reader setup is documented in
+[`docs/read_only_role.md`](docs/read_only_role.md).
