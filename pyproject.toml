@@ -24,3 +24,6 @@ test = [
 
 [tool.setuptools.packages.find]
 include = ["backend*", "banking_data*"]
+
+[tool.setuptools.package-data]
+"backend.app.ai.resources" = ["*.json"]

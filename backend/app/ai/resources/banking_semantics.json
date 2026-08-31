@@ -1,0 +1,70 @@
+{
+  "semantics": [
+    {
+      "name": "Account status",
+      "definition": "An active, closed or inactive account is identified by joining accounts.account_status_id to account_statuses.account_status_id and matching status_name exactly to Active, Closed or Inactive."
+    },
+    {
+      "name": "Active loan",
+      "definition": "An active loan is identified by joining loans.loan_status_id to loan_statuses.loan_status_id and matching status_name exactly to Active."
+    },
+    {
+      "name": "Transaction count",
+      "definition": "Transaction count means the number of qualifying rows in banking.transactions."
+    },
+    {
+      "name": "Transaction amount",
+      "definition": "transactions.amount is a positive source magnitude. Do not make it negative based on transaction type. Direction is represented by account_origin_id and account_destination_id."
+    },
+    {
+      "name": "Transaction volume",
+      "definition": "No single transaction-volume metric is approved. A question using transaction volume without defining count or summed amount is ambiguous."
+    },
+    {
+      "name": "Account balance",
+      "definition": "accounts.balance is the recorded account balance. Negative balances are valid and must not be excluded unless the question requests it."
+    },
+    {
+      "name": "Loan interest rate",
+      "definition": "loans.interest_rate stores a fraction between 0 and 1. Multiply by 100 only when presenting a percentage."
+    },
+    {
+      "name": "Source chronology",
+      "definition": "Recorded cross-table dates may be chronologically inconsistent. Do not silently discard rows because an account, loan or transaction date appears out of order."
+    },
+    {
+      "name": "Same-account transactions",
+      "definition": "A transaction may have the same origin and destination account. Do not silently discard these rows."
+    },
+    {
+      "name": "Fraud data",
+      "definition": "The approved banking schema contains no fraud flag, fraud score or fraud outcome. Questions requiring fraud information are unanswerable."
+    }
+  ],
+  "controlled_domains": [
+    {
+      "name": "Account statuses",
+      "values": ["Active", "Closed", "Inactive"]
+    },
+    {
+      "name": "Account types",
+      "values": ["Business", "Checking", "Payroll", "Savings", "Youth"]
+    },
+    {
+      "name": "Customer types",
+      "values": ["Individual", "Large Enterprise", "Small Business"]
+    },
+    {
+      "name": "Loan statuses",
+      "values": ["Active", "Overdue", "Paid Off"]
+    },
+    {
+      "name": "Transaction types",
+      "values": ["Deposit", "Payment", "Transfer", "Withdrawal"]
+    },
+    {
+      "name": "Address countries",
+      "values": ["United States", "NULL"]
+    }
+  ]
+}
