@@ -37,3 +37,8 @@ python -m banking_data.cleaning --raw-dir data/raw --output-dir data/processed
 The approved transformation and diagnostic contract is documented in
 [`docs/data_cleaning.md`](docs/data_cleaning.md). Generated processed files remain
 ignored by Git and can always be rebuilt from the immutable raw CSV files.
+
+## PostgreSQL development service
+
+Local PostgreSQL setup and lifecycle commands are documented in
+[`docs/development_database.md`](docs/development_database.md).
