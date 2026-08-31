@@ -133,6 +133,9 @@ class ReadOnlyQueryExecutorTests(TestCase):
         self.assertFalse(result.truncated)
 
     def test_result_fetching_is_bounded_and_reports_truncation(self) -> None:
+        one_row = ReadOnlyQueryExecutor(self.engine, max_rows=2).execute(
+            "SELECT value FROM (VALUES (1)) AS items(value)"
+        )
         two_rows = ReadOnlyQueryExecutor(self.engine, max_rows=2).execute(
             "SELECT value FROM (VALUES (1), (2)) AS items(value) ORDER BY value"
         )
@@ -140,6 +143,9 @@ class ReadOnlyQueryExecutorTests(TestCase):
             "SELECT value FROM (VALUES (1), (2), (3)) AS items(value) ORDER BY value"
         )
 
+        self.assertEqual(one_row.rows, ((1,),))
+        self.assertEqual(one_row.row_count, 1)
+        self.assertFalse(one_row.truncated)
         self.assertEqual(two_rows.rows, ((1,), (2,)))
         self.assertEqual(two_rows.row_count, 2)
         self.assertFalse(two_rows.truncated)
