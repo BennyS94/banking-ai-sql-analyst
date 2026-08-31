@@ -18,6 +18,21 @@ host port are:
 `DATABASE_URL` is reserved for the Python database integration added in the
 schema task. Do not commit a populated URL.
 
+PostgreSQL integration tests use the separate
+`BANKING_TEST_OWNER_DATABASE_URL`. It must explicitly identify the banking
+project's owner connection and must use `postgresql+psycopg`. The test harness
+never falls back to the machine-level `DATABASE_URL`; this prevents an unrelated
+project URL from receiving temporary `banking_test_*` databases. For local
+development, both variables may contain the same project owner URL, but they
+remain separate configuration boundaries.
+
+Run the complete suite with:
+
+```powershell
+$env:BANKING_TEST_OWNER_DATABASE_URL = "postgresql+psycopg://banking_owner:<password>@localhost:5432/banking_ai"
+python -m unittest discover -s tests -v
+```
+
 ## Start and inspect
 
 ```powershell
