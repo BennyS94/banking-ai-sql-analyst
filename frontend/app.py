@@ -10,6 +10,12 @@ from frontend.api_client import (
     APIClientError,
     BankingAPIClient,
 )
+from frontend.presentation import (
+    QueryPresentation,
+    QueryPresentationError,
+    build_query_presentation,
+    format_duration,
+)
 from frontend.state import add_recent_question
 
 
@@ -27,6 +33,72 @@ def _initialize_state() -> None:
     st.session_state.setdefault("example_questions", None)
     st.session_state.setdefault("latest_query", None)
     st.session_state.setdefault("recent_questions", [])
+
+
+def _render_answerable_result(question: str, response: dict[str, object]) -> None:
+    try:
+        presentation = build_query_presentation(response)
+    except QueryPresentationError:
+        st.error("The application backend returned an invalid query response.")
+        return
+
+    st.divider()
+    st.subheader("Question")
+    st.write(question)
+
+    st.subheader("Generated SQL")
+    st.code(presentation.sql, language="sql")
+
+    st.subheader("Query results")
+    st.dataframe(presentation.dataframe, width="stretch", hide_index=True)
+    if presentation.truncated:
+        st.warning(
+            "Showing the first "
+            f"{presentation.returned_row_count:,} rows returned by the "
+            "application limit."
+        )
+
+    st.subheader("Execution details")
+    metadata_columns = st.columns(4)
+    metadata_columns[0].metric(
+        "Rows returned", f"{presentation.returned_row_count:,}"
+    )
+    metadata_columns[1].metric(
+        "SQL time", format_duration(presentation.execution_ms)
+    )
+    metadata_columns[2].metric(
+        "AI time", format_duration(presentation.generation_ms)
+    )
+    metadata_columns[3].metric("Model", presentation.model or "Not provided")
+
+    if presentation.repair_used:
+        st.info("SQL was automatically corrected once before execution.")
+
+    _render_technical_details(presentation)
+
+
+def _render_technical_details(presentation: QueryPresentation) -> None:
+    details: list[tuple[str, str]] = []
+    if presentation.reasoning_effort:
+        details.append(("Reasoning effort", presentation.reasoning_effort))
+    if presentation.statement_timeout_ms is not None:
+        details.append(
+            ("Statement timeout", f"{presentation.statement_timeout_ms:,} ms")
+        )
+    if presentation.input_tokens is not None:
+        details.append(("Input tokens", f"{presentation.input_tokens:,}"))
+    if presentation.output_tokens is not None:
+        details.append(("Output tokens", f"{presentation.output_tokens:,}"))
+    if presentation.finish_reason:
+        details.append(("Finish reason", presentation.finish_reason))
+    if presentation.provider_request_id:
+        details.append(("Provider request ID", presentation.provider_request_id))
+    if not details:
+        return
+
+    with st.expander("Technical details"):
+        for label, value in details:
+            st.write(f"**{label}:** {value}")
 
 
 def main() -> None:
@@ -108,8 +180,12 @@ def main() -> None:
 
     latest_query = st.session_state["latest_query"]
     if latest_query is not None:
-        st.subheader("Latest analysis")
-        st.caption(latest_query["question"])
+        latest_response = latest_query["response"]
+        if latest_response.get("status") == "answerable":
+            _render_answerable_result(latest_query["question"], latest_response)
+        else:
+            st.subheader("Latest analysis")
+            st.caption(latest_query["question"])
 
     recent_questions = st.session_state["recent_questions"]
     if recent_questions:

@@ -32,7 +32,9 @@ The frontend reads only its API URL and HTTP timeout settings. Database and
 Groq credentials remain backend-only. Example questions come from the public
 `GET /api/v1/examples` endpoint, and each analysis is submitted to
 `POST /api/v1/query`. The latest response and up to five recent questions exist
-only in the current Streamlit session.
+only in the current Streamlit session. Successful results show the executed SQL,
+backend-normalized rows in a dataframe, truncation and repair notices, and
+concise generation and execution metadata.
 
 ## Raw dataset audit
 
