@@ -25,3 +25,15 @@ Run the audit tests with:
 ```powershell
 python -m unittest discover -s tests -v
 ```
+
+## Banking data cleaning
+
+After Decision Gate A approval, rebuild the generated processed dataset with:
+
+```powershell
+python -m banking_data.cleaning --raw-dir data/raw --output-dir data/processed
+```
+
+The approved transformation and diagnostic contract is documented in
+[`docs/data_cleaning.md`](docs/data_cleaning.md). Generated processed files remain
+ignored by Git and can always be rebuilt from the immutable raw CSV files.
