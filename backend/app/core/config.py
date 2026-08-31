@@ -10,6 +10,8 @@ class Settings(BaseSettings):
 
     app_title: str = "Banking AI SQL Analyst API"
     app_version: str = "0.1.0"
+    banking_reader_user: str = "banking_reader"
+    banking_reader_database_url: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

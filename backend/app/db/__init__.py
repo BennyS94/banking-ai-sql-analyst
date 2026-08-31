@@ -1,0 +1,1 @@
+"""Synchronous PostgreSQL runtime access."""

@@ -70,3 +70,6 @@ The PostgreSQL analytical reader setup is documented in
 
 The complete Phase 1 rebuild and validation sequence is documented in
 [`docs/phase_1_workflow.md`](docs/phase_1_workflow.md).
+
+FastAPI startup and least-privilege runtime PostgreSQL configuration are
+documented in [`docs/query_backend.md`](docs/query_backend.md).
