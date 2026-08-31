@@ -42,3 +42,6 @@ ignored by Git and can always be rebuilt from the immutable raw CSV files.
 
 Local PostgreSQL setup and lifecycle commands are documented in
 [`docs/development_database.md`](docs/development_database.md).
+
+The approved relational schema and Alembic migration commands are documented in
+[`docs/database_schema.md`](docs/database_schema.md).
