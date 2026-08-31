@@ -1,5 +1,13 @@
 # banking-ai-sql-analyst
-AI-powered banking analytics application that converts natural-language questions into validated, read-only PostgreSQL queries.
+
+The project is intended to provide natural-language banking analytics by
+translating questions into validated, read-only PostgreSQL queries.
+
+Phase 1 currently implements the trusted data foundation: audited and cleaned
+banking data, PostgreSQL schema and migrations, transactional loading, a
+least-privilege read-only database role, and end-to-end integrity validation.
+FastAPI, Groq-backed NL-to-SQL generation, SQL validation, Streamlit, and the
+final application flow are planned for later phases and are not implemented yet.
 
 ## Raw dataset audit
 
