@@ -10,9 +10,9 @@ from alembic import command
 from alembic.config import Config
 import psycopg
 from psycopg import sql
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import make_url
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import DBAPIError, OperationalError
 
 from backend.app.core.config import Settings
 from backend.app.db.engine import create_runtime_engine
@@ -153,6 +153,35 @@ class ReadOnlyQueryExecutorTests(TestCase):
         self.assertEqual(three_rows.row_count, 2)
         self.assertTrue(three_rows.truncated)
 
+    def test_result_cap_uses_a_fixed_streaming_cursor_buffer(self) -> None:
+        execution_options: list[dict[str, object]] = []
+
+        def capture_options(
+            _connection: object,
+            _cursor: object,
+            statement: str,
+            _parameters: object,
+            context: object,
+            _executemany: bool,
+        ) -> None:
+            if "streamed_value" in statement:
+                execution_options.append(dict(context.execution_options))
+
+        event.listen(self.engine, "before_cursor_execute", capture_options)
+        try:
+            result = ReadOnlyQueryExecutor(self.engine, max_rows=2).execute(
+                "SELECT value AS streamed_value "
+                "FROM (VALUES (1), (2), (3)) AS items(value)"
+            )
+        finally:
+            event.remove(self.engine, "before_cursor_execute", capture_options)
+
+        self.assertTrue(result.truncated)
+        self.assertEqual(len(execution_options), 1)
+        self.assertEqual(execution_options[0]["yield_per"], 3)
+        self.assertTrue(execution_options[0]["stream_results"])
+        self.assertEqual(execution_options[0]["max_row_buffer"], 3)
+
     def test_transaction_is_read_only_and_runtime_settings_are_local(self) -> None:
         executor = ReadOnlyQueryExecutor(
             self.engine, statement_timeout_ms=1_234
@@ -190,14 +219,22 @@ class ReadOnlyQueryExecutorTests(TestCase):
         self.assertEqual(self.engine.pool.checkedout(), 0)
         self.assertEqual(executor.execute("SELECT 1").rows, ((1,),))
 
-    def test_direct_mutation_bypass_is_denied_and_data_is_unchanged(self) -> None:
-        with mock.patch("backend.app.db.query_executor.logger.exception"):
-            with self.assertRaises(QueryExecutionError) as caught:
-                self.executor.execute(
-                    "UPDATE banking.accounts SET balance = 0 WHERE account_id = 1"
-                )
+    def test_direct_runtime_connection_mutation_is_denied_and_unchanged(self) -> None:
+        with self.assertRaises(DBAPIError) as caught:
+            with self.engine.connect() as connection:
+                with connection.begin():
+                    connection.execute(text("SET TRANSACTION READ ONLY"))
+                    connection.execute(
+                        text(
+                            "UPDATE banking.accounts SET balance = 0 "
+                            "WHERE account_id = 1"
+                        )
+                    )
 
-        self.assertFalse(caught.exception.repair_eligible)
+        self.assertIn(
+            getattr(caught.exception.orig, "sqlstate", None),
+            {"25006", "42501"},
+        )
         result = self.executor.execute(
             "SELECT balance FROM banking.accounts WHERE account_id = 1"
         )

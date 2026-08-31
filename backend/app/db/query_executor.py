@@ -131,14 +131,19 @@ class ReadOnlyQueryExecutor:
                         )
                     )
                     generated_query_started = True
-                    result = connection.execute(text(statement))
-                    columns = tuple(result.keys())
-                    fetched_rows = result.fetchmany(self._max_rows + 1)
-                    truncated = len(fetched_rows) > self._max_rows
-                    rows = tuple(
-                        tuple(_normalize_value(value) for value in row)
-                        for row in fetched_rows[: self._max_rows]
-                    )
+                    result = connection.execution_options(
+                        yield_per=self._max_rows + 1
+                    ).execute(text(statement))
+                    try:
+                        columns = tuple(result.keys())
+                        fetched_rows = result.fetchmany(self._max_rows + 1)
+                        truncated = len(fetched_rows) > self._max_rows
+                        rows = tuple(
+                            tuple(_normalize_value(value) for value in row)
+                            for row in fetched_rows[: self._max_rows]
+                        )
+                    finally:
+                        result.close()
         except SQLAlchemyError as exc:
             logger.exception("Approved query execution failed")
             if generated_query_started:
