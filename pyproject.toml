@@ -10,11 +10,13 @@ dependencies = [
     "alembic>=1.18,<2",
     "fastapi>=0.116,<1",
     "groq>=0.31,<1",
+    "httpx>=0.28,<1",
     "pandas>=2.2,<3",
     "pydantic-settings>=2.10,<3",
     "psycopg[binary]>=3.3,<4",
     "SQLAlchemy>=2.0,<3",
     "sqlglot>=30.17,<31",
+    "streamlit>=1.54,<2",
     "uvicorn>=0.35,<1",
 ]
 
@@ -24,7 +26,7 @@ test = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["backend*", "banking_data*"]
+include = ["backend*", "banking_data*", "frontend*"]
 
 [tool.setuptools.package-data]
 "backend.app.ai.resources" = ["*.json"]

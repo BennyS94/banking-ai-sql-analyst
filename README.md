@@ -10,8 +10,9 @@ Phase 2 implements the query backend: FastAPI process health, least-privilege
 PostgreSQL runtime access, banking schema introspection and its typed API, plus
 an internal executor for already-approved analytical SQL. Phase 3 implements
 structured, schema-grounded Groq NL-to-SQL generation and an opt-in live smoke
-workflow. Generated SQL remains untrusted and is not executed. SQL validation,
-Streamlit, and the final application flow are not implemented.
+workflow. Phase 4 validates untrusted generated SQL and executes only approved
+queries through the least-privilege runtime boundary. Phase 5 adds the
+Streamlit presentation layer over the public FastAPI interface.
 
 Install the backend and test dependencies, then start the development API:
 
@@ -19,6 +20,16 @@ Install the backend and test dependencies, then start the development API:
 python -m pip install -e ".[test]"
 python -m uvicorn backend.app.main:app --reload
 ```
+
+In a second terminal, configure the public API URL and start the frontend:
+
+```powershell
+$env:API_BASE_URL = "http://localhost:8000"
+python -m streamlit run frontend/app.py
+```
+
+The frontend reads only its API URL and HTTP timeout settings. Database and
+Groq credentials remain backend-only.
 
 ## Raw dataset audit
 
