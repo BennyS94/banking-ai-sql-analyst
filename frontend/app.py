@@ -17,6 +17,12 @@ from frontend.presentation import (
     format_duration,
 )
 from frontend.state import add_recent_question
+from frontend.ux import (
+    ErrorPresentation,
+    SemanticPresentation,
+    client_error_presentation,
+    semantic_presentation,
+)
 
 
 def _select_question(question: str) -> None:
@@ -32,6 +38,7 @@ def _initialize_state() -> None:
     st.session_state.setdefault("question_input", "")
     st.session_state.setdefault("example_questions", None)
     st.session_state.setdefault("latest_query", None)
+    st.session_state.setdefault("latest_error", None)
     st.session_state.setdefault("recent_questions", [])
 
 
@@ -50,6 +57,8 @@ def _render_answerable_result(question: str, response: dict[str, object]) -> Non
     st.code(presentation.sql, language="sql")
 
     st.subheader("Query results")
+    if presentation.returned_row_count == 0:
+        st.info("The query executed successfully but returned no rows.")
     st.dataframe(presentation.dataframe, width="stretch", hide_index=True)
     if presentation.truncated:
         st.warning(
@@ -99,6 +108,35 @@ def _render_technical_details(presentation: QueryPresentation) -> None:
     with st.expander("Technical details"):
         for label, value in details:
             st.write(f"**{label}:** {value}")
+
+
+def _render_semantic_result(
+    question: str, response: dict[str, object]
+) -> None:
+    presentation = semantic_presentation(
+        response.get("status"), response.get("message")
+    )
+    if presentation is None:
+        st.error("The application backend returned an invalid query response.")
+        return
+
+    st.divider()
+    st.subheader("Question")
+    st.write(question)
+    st.subheader(presentation.title)
+    _render_semantic_message(presentation)
+
+
+def _render_semantic_message(presentation: SemanticPresentation) -> None:
+    if presentation.level == "warning":
+        st.warning(presentation.message)
+    else:
+        st.info(presentation.message)
+
+
+def _render_query_error(presentation: ErrorPresentation) -> None:
+    st.divider()
+    st.error(f"**{presentation.title}**\n\n{presentation.message}")
 
 
 def main() -> None:
@@ -159,24 +197,25 @@ def main() -> None:
         if not question.strip():
             st.warning("Enter a banking analytics question before analyzing.")
         else:
+            submitted_question = question.strip()
+            st.session_state["recent_questions"] = add_recent_question(
+                st.session_state["recent_questions"], submitted_question
+            )
             try:
                 with st.spinner(
                     "Generating and safely executing the banking query..."
                 ):
                     with BankingAPIClient(config) as client:
-                        response = client.query(question.strip())
+                        response = client.query(submitted_question)
             except APIClientError as exc:
-                st.error(exc.user_message)
+                st.session_state["latest_query"] = None
+                st.session_state["latest_error"] = client_error_presentation(exc)
             else:
-                submitted_question = question.strip()
                 st.session_state["latest_query"] = {
                     "question": submitted_question,
                     "response": response,
                 }
-                st.session_state["recent_questions"] = add_recent_question(
-                    st.session_state["recent_questions"], submitted_question
-                )
-                st.success("Banking analysis completed.")
+                st.session_state["latest_error"] = None
 
     latest_query = st.session_state["latest_query"]
     if latest_query is not None:
@@ -184,18 +223,23 @@ def main() -> None:
         if latest_response.get("status") == "answerable":
             _render_answerable_result(latest_query["question"], latest_response)
         else:
-            st.subheader("Latest analysis")
-            st.caption(latest_query["question"])
+            _render_semantic_result(latest_query["question"], latest_response)
+
+    latest_error = st.session_state["latest_error"]
+    if latest_error is not None:
+        _render_query_error(latest_error)
 
     recent_questions = st.session_state["recent_questions"]
     if recent_questions:
         st.subheader("Recent questions")
+        recent_columns = st.columns(2)
         for index, recent_question in enumerate(recent_questions):
-            st.button(
+            recent_columns[index % 2].button(
                 recent_question,
                 key=f"recent-{index}",
                 on_click=_select_question,
                 args=(recent_question,),
+                use_container_width=True,
             )
 
 

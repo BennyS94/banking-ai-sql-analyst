@@ -35,6 +35,9 @@ Groq credentials remain backend-only. Example questions come from the public
 only in the current Streamlit session. Successful results show the executed SQL,
 backend-normalized rows in a dataframe, truncation and repair notices, and
 concise generation and execution metadata.
+Ambiguous and unanswerable questions remain non-error semantic outcomes. Safety,
+provider, network, PostgreSQL timeout and infrastructure failures have distinct,
+sanitized UI states, and zero-row query success is reported explicitly.
 
 ## Raw dataset audit
 

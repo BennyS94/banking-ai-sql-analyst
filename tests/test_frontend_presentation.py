@@ -142,3 +142,23 @@ class QueryPresentationSmokeTests(TestCase):
             any("automatically corrected" in item.value for item in app.info)
         )
         self.assertEqual(len(app.exception), 0)
+
+    def test_zero_row_success_is_explicit_and_keeps_sql_visible(self) -> None:
+        app_path = Path(__file__).parents[1] / "frontend" / "app.py"
+        app = AppTest.from_file(str(app_path))
+        app.session_state["question_input"] = "Find impossible balance"
+        app.session_state["example_questions"] = ()
+        app.session_state["latest_query"] = {
+            "question": "Find impossible balance",
+            "response": _response(rows=[], returned_row_count=0),
+        }
+        app.session_state["latest_error"] = None
+        app.session_state["recent_questions"] = []
+
+        app.run()
+
+        self.assertTrue(
+            any("returned no rows" in item.value for item in app.info)
+        )
+        self.assertEqual(len(app.code), 1)
+        self.assertEqual(len(app.exception), 0)
