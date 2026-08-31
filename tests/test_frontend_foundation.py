@@ -22,6 +22,7 @@ class APIClientConfigTests(TestCase):
             {
                 "API_BASE_URL": "https://backend.example.test/",
                 "API_REQUEST_TIMEOUT_SECONDS": "4.5",
+                "API_CONNECT_TIMEOUT_SECONDS": "0.75",
                 "DATABASE_URL": "must-not-be-read",
                 "GROQ_API_KEY": "must-not-be-read",
             }
@@ -29,12 +30,15 @@ class APIClientConfigTests(TestCase):
 
         self.assertEqual(config.base_url, "https://backend.example.test")
         self.assertEqual(config.timeout_seconds, 4.5)
+        self.assertEqual(config.connect_timeout_seconds, 0.75)
 
     def test_invalid_url_and_timeout_are_rejected(self) -> None:
         with self.assertRaises(APIClientConfigurationError):
             APIClientConfig(base_url="localhost:8000")
         with self.assertRaises(APIClientConfigurationError):
             APIClientConfig(timeout_seconds=0)
+        with self.assertRaises(APIClientConfigurationError):
+            APIClientConfig(connect_timeout_seconds=0)
         with self.assertRaises(APIClientConfigurationError):
             APIClientConfig.from_env(
                 {"API_REQUEST_TIMEOUT_SECONDS": "not-a-number"}
@@ -91,7 +95,7 @@ class BankingAPIClientTests(TestCase):
 
 
 class StreamlitFoundationTests(TestCase):
-    def test_page_foundation_renders_without_backend_access(self) -> None:
+    def test_page_foundation_renders_when_backend_is_unavailable(self) -> None:
         app_path = Path(__file__).parents[1] / "frontend" / "app.py"
         app = AppTest.from_file(str(app_path)).run()
 
@@ -100,7 +104,7 @@ class StreamlitFoundationTests(TestCase):
         self.assertEqual(app.button[0].label, "Analyze")
         self.assertEqual(len(app.exception), 0)
 
-    def test_empty_submission_is_handled_without_backend_access(self) -> None:
+    def test_empty_submission_is_handled_cleanly(self) -> None:
         app_path = Path(__file__).parents[1] / "frontend" / "app.py"
         app = AppTest.from_file(str(app_path)).run()
 

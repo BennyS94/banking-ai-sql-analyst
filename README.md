@@ -29,7 +29,10 @@ python -m streamlit run frontend/app.py
 ```
 
 The frontend reads only its API URL and HTTP timeout settings. Database and
-Groq credentials remain backend-only.
+Groq credentials remain backend-only. Example questions come from the public
+`GET /api/v1/examples` endpoint, and each analysis is submitted to
+`POST /api/v1/query`. The latest response and up to five recent questions exist
+only in the current Streamlit session.
 
 ## Raw dataset audit
 
