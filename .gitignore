@@ -1,0 +1,33 @@
+# Environments and local configuration
+.venv/
+.env
+.env.*
+!.env.example
+
+# Python caches and tooling
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Editors
+.vscode/
+.idea/
+
+# Local planning workspace
+.local/
+AGENTS.md
+
+# Generated data
+data/processed/
