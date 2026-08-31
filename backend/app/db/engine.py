@@ -8,12 +8,13 @@ import logging
 
 from sqlalchemy import Connection, Engine, create_engine, text
 from sqlalchemy.engine import make_url
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import ArgumentError, SQLAlchemyError
 
 from backend.app.core.config import Settings, get_settings
 
 
 logger = logging.getLogger(__name__)
+SUPPORTED_RUNTIME_DRIVER = "postgresql+psycopg"
 
 
 class DatabaseConfigurationError(RuntimeError):
@@ -40,21 +41,26 @@ def create_runtime_engine(settings: Settings) -> Engine:
 
     try:
         url = make_url(raw_url)
-    except (TypeError, ValueError) as exc:
+    except (ArgumentError, TypeError, ValueError) as exc:
         raise DatabaseConfigurationError(
             "BANKING_READER_DATABASE_URL must be a valid SQLAlchemy URL"
         ) from exc
 
-    if not url.drivername.startswith("postgresql"):
+    if url.drivername != SUPPORTED_RUNTIME_DRIVER:
         raise DatabaseConfigurationError(
-            "BANKING_READER_DATABASE_URL must use PostgreSQL"
+            "BANKING_READER_DATABASE_URL must use postgresql+psycopg"
         )
     if url.username != settings.banking_reader_user:
         raise DatabaseConfigurationError(
             "BANKING_READER_DATABASE_URL user must match BANKING_READER_USER"
         )
 
-    return create_engine(url, pool_pre_ping=True)
+    try:
+        return create_engine(url, pool_pre_ping=True)
+    except (SQLAlchemyError, ImportError, TypeError, ValueError) as exc:
+        raise DatabaseConfigurationError(
+            "BANKING_READER_DATABASE_URL cannot configure the runtime engine"
+        ) from exc
 
 
 @lru_cache

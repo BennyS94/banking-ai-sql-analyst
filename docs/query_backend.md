@@ -16,6 +16,10 @@ The backend database boundary reads only these runtime variables:
 - `BANKING_READER_USER`: the dedicated analytical role name;
 - `BANKING_READER_DATABASE_URL`: its SQLAlchemy PostgreSQL connection URL.
 
+The runtime URL must use the project's installed `postgresql+psycopg` driver.
+Malformed URLs, other dialects and unsupported driver names fail through a
+sanitized configuration error before runtime access is attempted.
+
 The URL username must match `BANKING_READER_USER`. Owner/migration/loader
 configuration remains under `DATABASE_URL` and is not read by the FastAPI
 runtime engine. Keep all real passwords in the untracked local `.env` file.

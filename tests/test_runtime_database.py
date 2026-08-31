@@ -10,6 +10,7 @@ import psycopg
 from psycopg import sql
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
+from sqlalchemy.exc import NoSuchModuleError
 
 from backend.app.core.config import Settings
 from backend.app.db.engine import (
@@ -27,20 +28,106 @@ from database_test_support import temporary_database
 
 
 class RuntimeDatabaseConfigurationTests(TestCase):
+    def test_valid_psycopg_postgresql_url_creates_engine(self) -> None:
+        engine = create_runtime_engine(
+            Settings(
+                banking_reader_user="banking_reader",
+                banking_reader_database_url=(
+                    "postgresql+psycopg://banking_reader:secret@localhost/banking_ai"
+                ),
+            )
+        )
+        try:
+            self.assertEqual(engine.url.drivername, "postgresql+psycopg")
+            self.assertEqual(engine.url.username, "banking_reader")
+        finally:
+            engine.dispose()
+
     def test_runtime_url_is_required_when_database_access_is_requested(self) -> None:
         with self.assertRaisesRegex(
             DatabaseConfigurationError, "BANKING_READER_DATABASE_URL must be set"
         ):
             create_runtime_engine(Settings(banking_reader_database_url=None))
 
-    def test_runtime_url_must_use_postgresql(self) -> None:
-        with self.assertRaisesRegex(DatabaseConfigurationError, "use PostgreSQL"):
+    def test_runtime_url_must_use_supported_postgresql_driver(self) -> None:
+        with self.assertRaisesRegex(
+            DatabaseConfigurationError, "use postgresql\\+psycopg"
+        ):
             create_runtime_engine(
                 Settings(
                     banking_reader_user="banking_reader",
                     banking_reader_database_url="sqlite:///banking.db",
                 )
             )
+
+    def test_postgresql_like_driver_name_is_rejected(self) -> None:
+        password = "must-not-appear"
+        with self.assertRaisesRegex(
+            DatabaseConfigurationError, "use postgresql\\+psycopg"
+        ) as caught:
+            create_runtime_engine(
+                Settings(
+                    banking_reader_user="banking_reader",
+                    banking_reader_database_url=(
+                        f"postgresqlwrong://banking_reader:{password}@localhost/banking_ai"
+                    ),
+                )
+            )
+        self.assertNotIn(password, str(caught.exception))
+
+    def test_malformed_url_is_sanitized(self) -> None:
+        with self.assertRaises(DatabaseConfigurationError) as caught:
+            create_runtime_engine(
+                Settings(
+                    banking_reader_user="banking_reader",
+                    banking_reader_database_url="not a url",
+                )
+            )
+
+        self.assertEqual(
+            str(caught.exception),
+            "BANKING_READER_DATABASE_URL must be a valid SQLAlchemy URL",
+        )
+
+    def test_engine_configuration_failure_is_sanitized(self) -> None:
+        password = "must-not-appear"
+        settings = Settings(
+            banking_reader_user="banking_reader",
+            banking_reader_database_url=(
+                f"postgresql+psycopg://banking_reader:{password}@localhost/banking_ai"
+            ),
+        )
+        with mock.patch(
+            "backend.app.db.engine.create_engine",
+            side_effect=NoSuchModuleError(f"driver failure with {password}"),
+        ):
+            with self.assertRaises(DatabaseConfigurationError) as caught:
+                create_runtime_engine(settings)
+
+        self.assertEqual(
+            str(caught.exception),
+            "BANKING_READER_DATABASE_URL cannot configure the runtime engine",
+        )
+        self.assertNotIn(password, str(caught.exception))
+
+    def test_generic_database_url_does_not_configure_runtime_access(self) -> None:
+        with mock.patch.dict(
+            os.environ,
+            {
+                "DATABASE_URL": (
+                    "postgresql+psycopg://foreign_user:foreign_password@"
+                    "localhost/foreign_database"
+                )
+            },
+            clear=True,
+        ):
+            settings = Settings(_env_file=None)
+
+        self.assertIsNone(settings.banking_reader_database_url)
+        with self.assertRaisesRegex(
+            DatabaseConfigurationError, "BANKING_READER_DATABASE_URL must be set"
+        ):
+            create_runtime_engine(settings)
 
     def test_runtime_url_cannot_use_a_different_identity(self) -> None:
         with self.assertRaisesRegex(
