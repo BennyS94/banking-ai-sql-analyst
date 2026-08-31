@@ -37,3 +37,11 @@ nullability, primary keys and foreign-key targets. Tables and foreign keys are
 sorted, while columns and key columns retain their stable PostgreSQL definition
 order. Metadata outside `banking`, including system schemas and Alembic's
 internal table, is not inspected.
+
+## Schema API
+
+`GET /api/v1/database/schema` exposes the introspected metadata through explicit
+response models. The JSON contract uses `schema`, `tables`, `columns`,
+`primary_key` and `foreign_keys`; PostgreSQL connection details are never part
+of the response. If metadata cannot be read, the endpoint returns a sanitized
+`503 Service Unavailable` response.
