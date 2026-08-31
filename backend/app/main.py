@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from backend.app.api.routes.database_schema import router as database_schema_router
 from backend.app.api.routes.health import router as health_router
+from backend.app.api.routes.query import router as query_router
 from backend.app.core.config import Settings, get_settings
 from backend.app.db.engine import dispose_runtime_engine
 
@@ -30,6 +31,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     application.include_router(health_router)
     application.include_router(database_schema_router)
+    application.include_router(query_router)
+    if settings is not None:
+        application.dependency_overrides[get_settings] = lambda: application_settings
     return application
 
 
