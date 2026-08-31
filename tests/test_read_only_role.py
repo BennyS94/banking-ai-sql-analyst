@@ -72,6 +72,81 @@ class ReadOnlyRoleIntegrationTests(TestCase):
         self.assertEqual(count, 1)
         self.assertEqual(joined, 1)
 
+    def test_clean_existing_reader_can_be_reprovisioned(self) -> None:
+        result = provision_reader_role(
+            self.owner_url, self.reader_user, self.reader_password
+        )
+        self.assertEqual(result["status"], "provisioned")
+        with self.reader_engine.connect() as connection:
+            self.assertEqual(
+                connection.scalar(text("SELECT count(*) FROM banking.accounts")), 1
+            )
+
+    def test_existing_role_with_inherited_write_privileges_is_rejected(self) -> None:
+        group_name = f"banking_writer_test_{uuid4().hex}"
+        candidate_name = f"banking_reader_test_{uuid4().hex}"
+        with psycopg.connect(
+            _psycopg_connection_string(self.owner_url), autocommit=True
+        ) as connection:
+            group = sql.Identifier(group_name)
+            candidate = sql.Identifier(candidate_name)
+            connection.execute(sql.SQL("CREATE ROLE {} NOLOGIN").format(group))
+            connection.execute(sql.SQL("CREATE ROLE {} LOGIN").format(candidate))
+            try:
+                connection.execute(
+                    sql.SQL("GRANT INSERT ON banking.addresses TO {}").format(group)
+                )
+                connection.execute(
+                    sql.SQL("GRANT {} TO {}").format(group, candidate)
+                )
+                with self.assertRaisesRegex(
+                    RoleConfigurationError, f"role memberships: {group_name}"
+                ):
+                    provision_reader_role(
+                        self.owner_url, candidate_name, "irrelevant-test-value"
+                    )
+                inherited_insert = connection.execute(
+                    "SELECT has_table_privilege(%s, 'banking.addresses', 'INSERT')",
+                    (candidate_name,),
+                ).fetchone()[0]
+                self.assertTrue(inherited_insert)
+            finally:
+                connection.execute(
+                    sql.SQL("REVOKE {} FROM {}").format(group, candidate)
+                )
+                connection.execute(sql.SQL("DROP OWNED BY {}").format(candidate))
+                connection.execute(sql.SQL("DROP OWNED BY {}").format(group))
+                connection.execute(sql.SQL("DROP ROLE {}").format(candidate))
+                connection.execute(sql.SQL("DROP ROLE {}").format(group))
+
+    def test_existing_role_with_relevant_object_ownership_is_rejected(self) -> None:
+        candidate_name = f"banking_reader_test_{uuid4().hex}"
+        table_name = f"reader_owned_probe_{uuid4().hex}"
+        with psycopg.connect(
+            _psycopg_connection_string(self.owner_url), autocommit=True
+        ) as connection:
+            candidate = sql.Identifier(candidate_name)
+            table = sql.Identifier("banking", table_name)
+            connection.execute(sql.SQL("CREATE ROLE {} LOGIN").format(candidate))
+            try:
+                connection.execute(
+                    sql.SQL("CREATE TABLE {} (id integer)").format(table)
+                )
+                connection.execute(
+                    sql.SQL("ALTER TABLE {} OWNER TO {}").format(table, candidate)
+                )
+                with self.assertRaisesRegex(
+                    RoleConfigurationError,
+                    f"owns relevant objects: relation banking.{table_name}",
+                ):
+                    provision_reader_role(
+                        self.owner_url, candidate_name, "irrelevant-test-value"
+                    )
+            finally:
+                connection.execute(sql.SQL("DROP TABLE IF EXISTS {}").format(table))
+                connection.execute(sql.SQL("DROP OWNED BY {}").format(candidate))
+                connection.execute(sql.SQL("DROP ROLE {}").format(candidate))
+
     def test_reader_does_not_own_tables_or_have_elevated_role_flags(self) -> None:
         with self.owner_engine.connect() as connection:
             role_flags = connection.execute(
@@ -98,6 +173,8 @@ class ReadOnlyRoleIntegrationTests(TestCase):
             "DELETE FROM banking.addresses WHERE address_id = 1",
             "TRUNCATE banking.transactions",
             "CREATE TABLE banking.forbidden_create (id integer)",
+            "CREATE TABLE public.forbidden_create (id integer)",
+            "CREATE TEMPORARY TABLE forbidden_temp (id integer)",
             "ALTER TABLE banking.addresses ADD COLUMN forbidden integer",
             "DROP TABLE banking.transactions",
             "CREATE ROLE forbidden_role",

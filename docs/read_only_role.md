@@ -15,8 +15,15 @@ python -m banking_data.role_management
 
 The command creates or hardens the login and grants only schema `USAGE` plus
 `SELECT` on the current banking tables. It does not grant ownership, role
-management, database/schema creation, or table mutation privileges. Re-running
-the command safely rotates the supplied reader password and reapplies grants.
+management, database/schema/temporary-object creation, sequence access, or table
+mutation privileges.
+
+Provisioning is transactional and fails closed for a pre-existing target role
+that belongs to another role or owns the project database, the `banking` schema,
+or relevant project relations. These relationships are not removed
+automatically. After applying the direct grants, the command checks the role's
+effective privilege boundary before committing. Re-running the command for an
+existing clean reader safely rotates its password and reapplies the grants.
 
 Configure `BANKING_READER_DATABASE_URL` separately for future analytical query
 execution. Never put a populated URL or password in source control.
