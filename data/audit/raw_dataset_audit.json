@@ -1,0 +1,1595 @@
+{
+  "audit_schema_version": 1,
+  "discovery": {
+    "discovered_csv_files": [
+      "account_statuses.csv",
+      "account_types.csv",
+      "accounts.csv",
+      "addresses.csv",
+      "branches.csv",
+      "customer_types.csv",
+      "customers.csv",
+      "loan_statuses.csv",
+      "loans.csv",
+      "transaction_types.csv",
+      "transactions.csv"
+    ],
+    "expected_csv_files": [
+      "account_statuses.csv",
+      "account_types.csv",
+      "accounts.csv",
+      "addresses.csv",
+      "branches.csv",
+      "customer_types.csv",
+      "customers.csv",
+      "loan_statuses.csv",
+      "loans.csv",
+      "transaction_types.csv",
+      "transactions.csv"
+    ],
+    "missing_expected_csv_files": [],
+    "unexpected_csv_files": []
+  },
+  "files": [
+    {
+      "candidate_keys": [
+        {
+          "column": "AccountStatusID",
+          "distinct_non_null_count": 3,
+          "duplicate_distinct_value_count": 0,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": true
+        }
+      ],
+      "categorical_values": {
+        "StatusName": {
+          "distinct_non_null_count": 3,
+          "frequencies": [
+            {
+              "count": 1,
+              "value": "Active"
+            },
+            {
+              "count": 1,
+              "value": "Closed"
+            },
+            {
+              "count": 1,
+              "value": "Inactive"
+            }
+          ]
+        }
+      },
+      "column_count": 2,
+      "columns": [
+        "AccountStatusID",
+        "StatusName"
+      ],
+      "date_fields": {},
+      "duplicates": {
+        "exact_duplicate_rows_involved": 0,
+        "excess_exact_duplicate_rows": 0,
+        "identifier_columns": {
+          "AccountStatusID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 0,
+            "duplicate_rows_involved": 0,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": []
+          }
+        }
+      },
+      "file_name": "account_statuses.csv",
+      "inferred_pandas_types": {
+        "AccountStatusID": "int64",
+        "StatusName": "object"
+      },
+      "missing": {
+        "AccountStatusID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "StatusName": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        }
+      },
+      "numerical_fields": {},
+      "read_error": null,
+      "row_count": 3,
+      "sha256": "50e9da75eafe6226dfee4d436e63ea8b2f01f5f6f6d7529b87243e1625393560",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "AccountTypeID",
+          "distinct_non_null_count": 5,
+          "duplicate_distinct_value_count": 0,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": true
+        }
+      ],
+      "categorical_values": {
+        "TypeName": {
+          "distinct_non_null_count": 5,
+          "frequencies": [
+            {
+              "count": 1,
+              "value": "Business"
+            },
+            {
+              "count": 1,
+              "value": "Checking"
+            },
+            {
+              "count": 1,
+              "value": "Payroll"
+            },
+            {
+              "count": 1,
+              "value": "Savings"
+            },
+            {
+              "count": 1,
+              "value": "Youth"
+            }
+          ]
+        }
+      },
+      "column_count": 2,
+      "columns": [
+        "AccountTypeID",
+        "TypeName"
+      ],
+      "date_fields": {},
+      "duplicates": {
+        "exact_duplicate_rows_involved": 0,
+        "excess_exact_duplicate_rows": 0,
+        "identifier_columns": {
+          "AccountTypeID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 0,
+            "duplicate_rows_involved": 0,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": []
+          }
+        }
+      },
+      "file_name": "account_types.csv",
+      "inferred_pandas_types": {
+        "AccountTypeID": "int64",
+        "TypeName": "object"
+      },
+      "missing": {
+        "AccountTypeID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "TypeName": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        }
+      },
+      "numerical_fields": {},
+      "read_error": null,
+      "row_count": 5,
+      "sha256": "2df6fae9581dd9a2f2cbadc56fe60cf5c3565ae0b7717108e130073980395c3c",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "AccountID",
+          "distinct_non_null_count": 1651,
+          "duplicate_distinct_value_count": 16,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "CustomerID",
+          "distinct_non_null_count": 862,
+          "duplicate_distinct_value_count": 488,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "AccountTypeID",
+          "distinct_non_null_count": 5,
+          "duplicate_distinct_value_count": 5,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "AccountStatusID",
+          "distinct_non_null_count": 3,
+          "duplicate_distinct_value_count": 3,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        }
+      ],
+      "categorical_values": {},
+      "column_count": 6,
+      "columns": [
+        "AccountID",
+        "CustomerID",
+        "AccountTypeID",
+        "AccountStatusID",
+        "Balance",
+        "OpeningDate"
+      ],
+      "date_fields": {
+        "OpeningDate": {
+          "after_reference_date_count": 0,
+          "before_1900_count": 0,
+          "detected_formats": {
+            "YYYY-MM-DD HH:MM:SS.ffffff": 1634
+          },
+          "maximum": "2026-07-06T15:01:42.900415",
+          "minimum": "2018-01-03T00:00:00",
+          "null_count": 33,
+          "parse_failure_count": 0,
+          "sample_parse_failures": []
+        }
+      },
+      "duplicates": {
+        "exact_duplicate_rows_involved": 32,
+        "excess_exact_duplicate_rows": 16,
+        "identifier_columns": {
+          "AccountID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 16,
+            "duplicate_rows_involved": 32,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": [
+              "200002",
+              "200118",
+              "200147",
+              "200186",
+              "200332",
+              "200412",
+              "200430",
+              "200517",
+              "200561",
+              "200656"
+            ]
+          },
+          "AccountStatusID": {
+            "conflicting_duplicate_value_count": 3,
+            "duplicate_distinct_value_count": 3,
+            "duplicate_rows_involved": 1667,
+            "sample_conflicting_values": [
+              "1",
+              "2",
+              "3"
+            ],
+            "sample_duplicate_values": [
+              "1",
+              "2",
+              "3"
+            ]
+          },
+          "AccountTypeID": {
+            "conflicting_duplicate_value_count": 5,
+            "duplicate_distinct_value_count": 5,
+            "duplicate_rows_involved": 1667,
+            "sample_conflicting_values": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            "sample_duplicate_values": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ]
+          },
+          "CustomerID": {
+            "conflicting_duplicate_value_count": 485,
+            "duplicate_distinct_value_count": 488,
+            "duplicate_rows_involved": 1293,
+            "sample_conflicting_values": [
+              "10002",
+              "10004",
+              "10006",
+              "10009",
+              "10010",
+              "10020",
+              "10023",
+              "10024",
+              "10027",
+              "10030"
+            ],
+            "sample_duplicate_values": [
+              "10002",
+              "10004",
+              "10006",
+              "10009",
+              "10010",
+              "10020",
+              "10023",
+              "10024",
+              "10027",
+              "10030"
+            ]
+          }
+        }
+      },
+      "file_name": "accounts.csv",
+      "inferred_pandas_types": {
+        "AccountID": "int64",
+        "AccountStatusID": "int64",
+        "AccountTypeID": "int64",
+        "Balance": "float64",
+        "CustomerID": "int64",
+        "OpeningDate": "object"
+      },
+      "missing": {
+        "AccountID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "AccountStatusID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "AccountTypeID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "Balance": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "CustomerID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "OpeningDate": {
+          "null_count": 33,
+          "null_percentage": 1.9796
+        }
+      },
+      "numerical_fields": {
+        "Balance": {
+          "iqr_lower_bound": -52578.625,
+          "iqr_outlier_count": 0,
+          "iqr_upper_bound": 151200.695,
+          "maximum": 99828.98,
+          "median": 49112.5,
+          "minimum": -486.68,
+          "negative_count": 10,
+          "parse_failure_count": 0,
+          "sample_parse_failures": [],
+          "zero_count": 0
+        }
+      },
+      "read_error": null,
+      "row_count": 1667,
+      "sha256": "029190a34daf8d4711bc5fa1257a427e781295f37d4c647d89cef07ea640c5f0",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "AddressID",
+          "distinct_non_null_count": 1210,
+          "duplicate_distinct_value_count": 12,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        }
+      ],
+      "categorical_values": {
+        "Country": {
+          "distinct_non_null_count": 11,
+          "frequencies": [
+            {
+              "count": 24,
+              "value": null
+            },
+            {
+              "count": 1,
+              "value": "Pnited States"
+            },
+            {
+              "count": 3,
+              "value": "Unitd States"
+            },
+            {
+              "count": 1,
+              "value": "United Slates"
+            },
+            {
+              "count": 1,
+              "value": "United StXtes"
+            },
+            {
+              "count": 1,
+              "value": "United Staes"
+            },
+            {
+              "count": 1,
+              "value": "United State"
+            },
+            {
+              "count": 1,
+              "value": "United StateR"
+            },
+            {
+              "count": 1186,
+              "value": "United States"
+            },
+            {
+              "count": 1,
+              "value": "United vtates"
+            },
+            {
+              "count": 1,
+              "value": "United0States"
+            },
+            {
+              "count": 1,
+              "value": "UnitedcStates"
+            }
+          ]
+        }
+      },
+      "column_count": 4,
+      "columns": [
+        "AddressID",
+        "Street",
+        "City",
+        "Country"
+      ],
+      "date_fields": {},
+      "duplicates": {
+        "exact_duplicate_rows_involved": 24,
+        "excess_exact_duplicate_rows": 12,
+        "identifier_columns": {
+          "AddressID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 12,
+            "duplicate_rows_involved": 24,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": [
+              "109",
+              "1200",
+              "179",
+              "215",
+              "224",
+              "331",
+              "405",
+              "425",
+              "542",
+              "651"
+            ]
+          }
+        }
+      },
+      "file_name": "addresses.csv",
+      "inferred_pandas_types": {
+        "AddressID": "int64",
+        "City": "object",
+        "Country": "object",
+        "Street": "object"
+      },
+      "missing": {
+        "AddressID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "City": {
+          "null_count": 26,
+          "null_percentage": 2.1277
+        },
+        "Country": {
+          "null_count": 24,
+          "null_percentage": 1.964
+        },
+        "Street": {
+          "null_count": 24,
+          "null_percentage": 1.964
+        }
+      },
+      "numerical_fields": {},
+      "read_error": null,
+      "row_count": 1222,
+      "sha256": "72ac38f21aa2fa1b898496ac4e3058770027fa9c6f55114d1af95bbaa1b39398",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "BranchID",
+          "distinct_non_null_count": 50,
+          "duplicate_distinct_value_count": 0,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": true
+        },
+        {
+          "column": "AddressID",
+          "distinct_non_null_count": 50,
+          "duplicate_distinct_value_count": 0,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        }
+      ],
+      "categorical_values": {},
+      "column_count": 3,
+      "columns": [
+        "BranchID",
+        "BranchName",
+        "AddressID"
+      ],
+      "date_fields": {},
+      "duplicates": {
+        "exact_duplicate_rows_involved": 0,
+        "excess_exact_duplicate_rows": 0,
+        "identifier_columns": {
+          "AddressID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 0,
+            "duplicate_rows_involved": 0,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": []
+          },
+          "BranchID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 0,
+            "duplicate_rows_involved": 0,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": []
+          }
+        }
+      },
+      "file_name": "branches.csv",
+      "inferred_pandas_types": {
+        "AddressID": "int64",
+        "BranchID": "int64",
+        "BranchName": "object"
+      },
+      "missing": {
+        "AddressID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "BranchID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "BranchName": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        }
+      },
+      "numerical_fields": {},
+      "read_error": null,
+      "row_count": 50,
+      "sha256": "c3096f0787db77e8125f1104f3c166362c5c50dae75e46b7ced43cc408847b2b",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "CustomerTypeID",
+          "distinct_non_null_count": 3,
+          "duplicate_distinct_value_count": 0,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": true
+        }
+      ],
+      "categorical_values": {
+        "TypeName": {
+          "distinct_non_null_count": 3,
+          "frequencies": [
+            {
+              "count": 1,
+              "value": "Individual"
+            },
+            {
+              "count": 1,
+              "value": "Large Enterprise"
+            },
+            {
+              "count": 1,
+              "value": "Small Business"
+            }
+          ]
+        }
+      },
+      "column_count": 2,
+      "columns": [
+        "CustomerTypeID",
+        "TypeName"
+      ],
+      "date_fields": {},
+      "duplicates": {
+        "exact_duplicate_rows_involved": 0,
+        "excess_exact_duplicate_rows": 0,
+        "identifier_columns": {
+          "CustomerTypeID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 0,
+            "duplicate_rows_involved": 0,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": []
+          }
+        }
+      },
+      "file_name": "customer_types.csv",
+      "inferred_pandas_types": {
+        "CustomerTypeID": "int64",
+        "TypeName": "object"
+      },
+      "missing": {
+        "CustomerTypeID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "TypeName": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        }
+      },
+      "numerical_fields": {},
+      "read_error": null,
+      "row_count": 3,
+      "sha256": "c9fa43310fb528c32b83e75b76014a00e92f14ff08a1119be0572a0be3941187",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "CustomerID",
+          "distinct_non_null_count": 1100,
+          "duplicate_distinct_value_count": 11,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "AddressID",
+          "distinct_non_null_count": 720,
+          "duplicate_distinct_value_count": 281,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "CustomerTypeID",
+          "distinct_non_null_count": 3,
+          "duplicate_distinct_value_count": 3,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        }
+      ],
+      "categorical_values": {},
+      "column_count": 6,
+      "columns": [
+        "CustomerID",
+        "FirstName",
+        "LastName",
+        "DateOfBirth",
+        "AddressID",
+        "CustomerTypeID"
+      ],
+      "date_fields": {
+        "DateOfBirth": {
+          "after_reference_date_count": 0,
+          "before_1900_count": 0,
+          "detected_formats": {
+            "DD/MM/YYYY": 2,
+            "YYYY-MM-DD": 2,
+            "YYYY-MM-DD HH:MM:SS.ffffff": 1079,
+            "other": 28
+          },
+          "maximum": "2026-07-06T15:01:42.854835",
+          "minimum": "1960-01-18T00:00:00",
+          "null_count": 0,
+          "parse_failure_count": 24,
+          "sample_parse_failures": [
+            "1962-15-01",
+            "1974-31-01",
+            "NaT"
+          ]
+        }
+      },
+      "duplicates": {
+        "exact_duplicate_rows_involved": 22,
+        "excess_exact_duplicate_rows": 11,
+        "identifier_columns": {
+          "AddressID": {
+            "conflicting_duplicate_value_count": 276,
+            "duplicate_distinct_value_count": 281,
+            "duplicate_rows_involved": 672,
+            "sample_conflicting_values": [
+              "1001",
+              "1007",
+              "1010",
+              "1012",
+              "1015",
+              "1018",
+              "103",
+              "1032",
+              "1035",
+              "1052"
+            ],
+            "sample_duplicate_values": [
+              "1001",
+              "1007",
+              "1010",
+              "1012",
+              "1015",
+              "1018",
+              "103",
+              "1031",
+              "1032",
+              "1035"
+            ]
+          },
+          "CustomerID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 11,
+            "duplicate_rows_involved": 22,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": [
+              "10056",
+              "10071",
+              "10227",
+              "10526",
+              "10602",
+              "10739",
+              "10909",
+              "10937",
+              "11031",
+              "11041"
+            ]
+          },
+          "CustomerTypeID": {
+            "conflicting_duplicate_value_count": 3,
+            "duplicate_distinct_value_count": 3,
+            "duplicate_rows_involved": 1111,
+            "sample_conflicting_values": [
+              "1",
+              "2",
+              "3"
+            ],
+            "sample_duplicate_values": [
+              "1",
+              "2",
+              "3"
+            ]
+          }
+        }
+      },
+      "file_name": "customers.csv",
+      "inferred_pandas_types": {
+        "AddressID": "int64",
+        "CustomerID": "int64",
+        "CustomerTypeID": "int64",
+        "DateOfBirth": "object",
+        "FirstName": "object",
+        "LastName": "object"
+      },
+      "missing": {
+        "AddressID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "CustomerID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "CustomerTypeID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "DateOfBirth": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "FirstName": {
+          "null_count": 22,
+          "null_percentage": 1.9802
+        },
+        "LastName": {
+          "null_count": 23,
+          "null_percentage": 2.0702
+        }
+      },
+      "numerical_fields": {},
+      "read_error": null,
+      "row_count": 1111,
+      "sha256": "d86b77581e84646c876100740223e156bda4f9379643b877be4e91ed4f0c4478",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "LoanStatusID",
+          "distinct_non_null_count": 3,
+          "duplicate_distinct_value_count": 0,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": true
+        }
+      ],
+      "categorical_values": {
+        "StatusName": {
+          "distinct_non_null_count": 3,
+          "frequencies": [
+            {
+              "count": 1,
+              "value": "Active"
+            },
+            {
+              "count": 1,
+              "value": "Overdue"
+            },
+            {
+              "count": 1,
+              "value": "Paid Off"
+            }
+          ]
+        }
+      },
+      "column_count": 2,
+      "columns": [
+        "LoanStatusID",
+        "StatusName"
+      ],
+      "date_fields": {},
+      "duplicates": {
+        "exact_duplicate_rows_involved": 0,
+        "excess_exact_duplicate_rows": 0,
+        "identifier_columns": {
+          "LoanStatusID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 0,
+            "duplicate_rows_involved": 0,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": []
+          }
+        }
+      },
+      "file_name": "loan_statuses.csv",
+      "inferred_pandas_types": {
+        "LoanStatusID": "int64",
+        "StatusName": "object"
+      },
+      "missing": {
+        "LoanStatusID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "StatusName": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        }
+      },
+      "numerical_fields": {},
+      "read_error": null,
+      "row_count": 3,
+      "sha256": "f1a9a247d6e6d4d6ab8de3cfeb83a32e43128cb8461d0f6396d26a9e1caed448",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "LoanID",
+          "distinct_non_null_count": 330,
+          "duplicate_distinct_value_count": 3,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "AccountID",
+          "distinct_non_null_count": 298,
+          "duplicate_distinct_value_count": 34,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "LoanStatusID",
+          "distinct_non_null_count": 3,
+          "duplicate_distinct_value_count": 3,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        }
+      ],
+      "categorical_values": {},
+      "column_count": 7,
+      "columns": [
+        "LoanID",
+        "AccountID",
+        "LoanStatusID",
+        "PrincipalAmount",
+        "InterestRate",
+        "StartDate",
+        "EstimatedEndDate"
+      ],
+      "date_fields": {
+        "EstimatedEndDate": {
+          "after_reference_date_count": 53,
+          "before_1900_count": 0,
+          "detected_formats": {
+            "YYYY-MM-DD HH:MM:SS.ffffff": 327
+          },
+          "maximum": "2028-01-12T00:00:00",
+          "minimum": "2022-01-25T00:00:00",
+          "null_count": 6,
+          "parse_failure_count": 0,
+          "sample_parse_failures": []
+        },
+        "StartDate": {
+          "after_reference_date_count": 0,
+          "before_1900_count": 0,
+          "detected_formats": {
+            "YYYY-MM-DD HH:MM:SS.ffffff": 327
+          },
+          "maximum": "2026-08-29T15:01:44.338382",
+          "minimum": "2021-01-01T00:00:00",
+          "null_count": 6,
+          "parse_failure_count": 0,
+          "sample_parse_failures": []
+        }
+      },
+      "duplicates": {
+        "exact_duplicate_rows_involved": 6,
+        "excess_exact_duplicate_rows": 3,
+        "identifier_columns": {
+          "AccountID": {
+            "conflicting_duplicate_value_count": 31,
+            "duplicate_distinct_value_count": 34,
+            "duplicate_rows_involved": 69,
+            "sample_conflicting_values": [
+              "200017",
+              "200056",
+              "200075",
+              "200119",
+              "200186",
+              "200311",
+              "200397",
+              "200441",
+              "200475",
+              "200498"
+            ],
+            "sample_duplicate_values": [
+              "200017",
+              "200056",
+              "200075",
+              "200119",
+              "200186",
+              "200311",
+              "200397",
+              "200441",
+              "200475",
+              "200498"
+            ]
+          },
+          "LoanID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 3,
+            "duplicate_rows_involved": 6,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": [
+              "400091",
+              "400322",
+              "400329"
+            ]
+          },
+          "LoanStatusID": {
+            "conflicting_duplicate_value_count": 3,
+            "duplicate_distinct_value_count": 3,
+            "duplicate_rows_involved": 333,
+            "sample_conflicting_values": [
+              "1",
+              "2",
+              "3"
+            ],
+            "sample_duplicate_values": [
+              "1",
+              "2",
+              "3"
+            ]
+          }
+        }
+      },
+      "file_name": "loans.csv",
+      "inferred_pandas_types": {
+        "AccountID": "int64",
+        "EstimatedEndDate": "object",
+        "InterestRate": "float64",
+        "LoanID": "int64",
+        "LoanStatusID": "int64",
+        "PrincipalAmount": "float64",
+        "StartDate": "object"
+      },
+      "missing": {
+        "AccountID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "EstimatedEndDate": {
+          "null_count": 6,
+          "null_percentage": 1.8018
+        },
+        "InterestRate": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "LoanID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "LoanStatusID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "PrincipalAmount": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "StartDate": {
+          "null_count": 6,
+          "null_percentage": 1.8018
+        }
+      },
+      "numerical_fields": {
+        "InterestRate": {
+          "iqr_lower_bound": -0.017000000000000015,
+          "iqr_outlier_count": 0,
+          "iqr_upper_bound": 0.19740000000000002,
+          "maximum": 0.15,
+          "median": 0.0917,
+          "minimum": 0.0301,
+          "negative_count": 0,
+          "parse_failure_count": 0,
+          "sample_parse_failures": [],
+          "zero_count": 0
+        },
+        "PrincipalAmount": {
+          "iqr_lower_bound": -45913.58500000001,
+          "iqr_outlier_count": 0,
+          "iqr_upper_bound": 150796.935,
+          "maximum": 99830.33,
+          "median": 52255.85,
+          "minimum": 1128.49,
+          "negative_count": 0,
+          "parse_failure_count": 0,
+          "sample_parse_failures": [],
+          "zero_count": 0
+        }
+      },
+      "read_error": null,
+      "row_count": 333,
+      "sha256": "6768101ca4064ace21d48ec58235ea4cda74ee049fbaf50addc1a5de1632887f",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "TransactionTypeID",
+          "distinct_non_null_count": 4,
+          "duplicate_distinct_value_count": 0,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": true
+        }
+      ],
+      "categorical_values": {
+        "TypeName": {
+          "distinct_non_null_count": 4,
+          "frequencies": [
+            {
+              "count": 1,
+              "value": "Deposit"
+            },
+            {
+              "count": 1,
+              "value": "Payment"
+            },
+            {
+              "count": 1,
+              "value": "Transfer"
+            },
+            {
+              "count": 1,
+              "value": "Withdrawal"
+            }
+          ]
+        }
+      },
+      "column_count": 2,
+      "columns": [
+        "TransactionTypeID",
+        "TypeName"
+      ],
+      "date_fields": {},
+      "duplicates": {
+        "exact_duplicate_rows_involved": 0,
+        "excess_exact_duplicate_rows": 0,
+        "identifier_columns": {
+          "TransactionTypeID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 0,
+            "duplicate_rows_involved": 0,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": []
+          }
+        }
+      },
+      "file_name": "transaction_types.csv",
+      "inferred_pandas_types": {
+        "TransactionTypeID": "int64",
+        "TypeName": "object"
+      },
+      "missing": {
+        "TransactionTypeID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "TypeName": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        }
+      },
+      "numerical_fields": {},
+      "read_error": null,
+      "row_count": 4,
+      "sha256": "8489185085dbbe6b3480adfb4349abfe155cd66f191bf8ba3999a4e8a210ad1c",
+      "text_quality": {}
+    },
+    {
+      "candidate_keys": [
+        {
+          "column": "TransactionID",
+          "distinct_non_null_count": 49500,
+          "duplicate_distinct_value_count": 500,
+          "is_likely_primary_identifier": true,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "AccountOriginID",
+          "distinct_non_null_count": 1651,
+          "duplicate_distinct_value_count": 1651,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "AccountDestinationID",
+          "distinct_non_null_count": 1651,
+          "duplicate_distinct_value_count": 1651,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "TransactionTypeID",
+          "distinct_non_null_count": 4,
+          "duplicate_distinct_value_count": 4,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        },
+        {
+          "column": "BranchID",
+          "distinct_non_null_count": 50,
+          "duplicate_distinct_value_count": 50,
+          "is_likely_primary_identifier": false,
+          "null_count": 0,
+          "qualifies_as_primary_key_candidate": false
+        }
+      ],
+      "categorical_values": {},
+      "column_count": 8,
+      "columns": [
+        "TransactionID",
+        "AccountOriginID",
+        "AccountDestinationID",
+        "TransactionTypeID",
+        "Amount",
+        "TransactionDate",
+        "BranchID",
+        "Description"
+      ],
+      "date_fields": {
+        "TransactionDate": {
+          "after_reference_date_count": 0,
+          "before_1900_count": 0,
+          "detected_formats": {
+            "YYYY-MM-DD HH:MM:SS.ffffff": 49000
+          },
+          "maximum": "2026-08-28T15:01:43.084879",
+          "minimum": "2020-01-01T00:00:00",
+          "null_count": 1000,
+          "parse_failure_count": 0,
+          "sample_parse_failures": []
+        }
+      },
+      "duplicates": {
+        "exact_duplicate_rows_involved": 1000,
+        "excess_exact_duplicate_rows": 500,
+        "identifier_columns": {
+          "AccountDestinationID": {
+            "conflicting_duplicate_value_count": 1651,
+            "duplicate_distinct_value_count": 1651,
+            "duplicate_rows_involved": 50000,
+            "sample_conflicting_values": [
+              "200000",
+              "200001",
+              "200002",
+              "200003",
+              "200004",
+              "200005",
+              "200006",
+              "200007",
+              "200008",
+              "200009"
+            ],
+            "sample_duplicate_values": [
+              "200000",
+              "200001",
+              "200002",
+              "200003",
+              "200004",
+              "200005",
+              "200006",
+              "200007",
+              "200008",
+              "200009"
+            ]
+          },
+          "AccountOriginID": {
+            "conflicting_duplicate_value_count": 1651,
+            "duplicate_distinct_value_count": 1651,
+            "duplicate_rows_involved": 50000,
+            "sample_conflicting_values": [
+              "200000",
+              "200001",
+              "200002",
+              "200003",
+              "200004",
+              "200005",
+              "200006",
+              "200007",
+              "200008",
+              "200009"
+            ],
+            "sample_duplicate_values": [
+              "200000",
+              "200001",
+              "200002",
+              "200003",
+              "200004",
+              "200005",
+              "200006",
+              "200007",
+              "200008",
+              "200009"
+            ]
+          },
+          "BranchID": {
+            "conflicting_duplicate_value_count": 50,
+            "duplicate_distinct_value_count": 50,
+            "duplicate_rows_involved": 50000,
+            "sample_conflicting_values": [
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18"
+            ],
+            "sample_duplicate_values": [
+              "1",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18"
+            ]
+          },
+          "TransactionID": {
+            "conflicting_duplicate_value_count": 0,
+            "duplicate_distinct_value_count": 500,
+            "duplicate_rows_involved": 1000,
+            "sample_conflicting_values": [],
+            "sample_duplicate_values": [
+              "3000044",
+              "3000051",
+              "3000098",
+              "3000145",
+              "3000164",
+              "3000501",
+              "3000514",
+              "3000585",
+              "3000767",
+              "3000814"
+            ]
+          },
+          "TransactionTypeID": {
+            "conflicting_duplicate_value_count": 4,
+            "duplicate_distinct_value_count": 4,
+            "duplicate_rows_involved": 50000,
+            "sample_conflicting_values": [
+              "1",
+              "2",
+              "3",
+              "4"
+            ],
+            "sample_duplicate_values": [
+              "1",
+              "2",
+              "3",
+              "4"
+            ]
+          }
+        }
+      },
+      "file_name": "transactions.csv",
+      "inferred_pandas_types": {
+        "AccountDestinationID": "int64",
+        "AccountOriginID": "int64",
+        "Amount": "float64",
+        "BranchID": "int64",
+        "Description": "object",
+        "TransactionDate": "object",
+        "TransactionID": "int64",
+        "TransactionTypeID": "int64"
+      },
+      "missing": {
+        "AccountDestinationID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "AccountOriginID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "Amount": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "BranchID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "Description": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "TransactionDate": {
+          "null_count": 1000,
+          "null_percentage": 2.0
+        },
+        "TransactionID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        },
+        "TransactionTypeID": {
+          "null_count": 0,
+          "null_percentage": 0.0
+        }
+      },
+      "numerical_fields": {
+        "Amount": {
+          "iqr_lower_bound": -2479.432499999999,
+          "iqr_outlier_count": 0,
+          "iqr_upper_bound": 7494.807499999999,
+          "maximum": 4999.59,
+          "median": 2503.89,
+          "minimum": 1.01,
+          "negative_count": 0,
+          "parse_failure_count": 0,
+          "sample_parse_failures": [],
+          "zero_count": 0
+        }
+      },
+      "read_error": null,
+      "row_count": 50000,
+      "sha256": "71aa325acb33c4413a576cdfeb3396c2cba0445529361103dc05231f0d258583",
+      "text_quality": {}
+    }
+  ],
+  "reference_date": "2026-08-31",
+  "relationship_candidates": [
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "CustomerTypeID",
+      "source_file": "customers.csv",
+      "source_row_count": 1111,
+      "target_column": "CustomerTypeID",
+      "target_duplicate_key_rows": 0,
+      "target_file": "customer_types.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 1111
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "AddressID",
+      "source_file": "customers.csv",
+      "source_row_count": 1111,
+      "target_column": "AddressID",
+      "target_duplicate_key_rows": 24,
+      "target_file": "addresses.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 1111
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "CustomerID",
+      "source_file": "accounts.csv",
+      "source_row_count": 1667,
+      "target_column": "CustomerID",
+      "target_duplicate_key_rows": 22,
+      "target_file": "customers.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 1667
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "AccountTypeID",
+      "source_file": "accounts.csv",
+      "source_row_count": 1667,
+      "target_column": "AccountTypeID",
+      "target_duplicate_key_rows": 0,
+      "target_file": "account_types.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 1667
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "AccountStatusID",
+      "source_file": "accounts.csv",
+      "source_row_count": 1667,
+      "target_column": "AccountStatusID",
+      "target_duplicate_key_rows": 0,
+      "target_file": "account_statuses.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 1667
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "AddressID",
+      "source_file": "branches.csv",
+      "source_row_count": 50,
+      "target_column": "AddressID",
+      "target_duplicate_key_rows": 24,
+      "target_file": "addresses.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 50
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "AccountID",
+      "source_file": "loans.csv",
+      "source_row_count": 333,
+      "target_column": "AccountID",
+      "target_duplicate_key_rows": 32,
+      "target_file": "accounts.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 333
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "LoanStatusID",
+      "source_file": "loans.csv",
+      "source_row_count": 333,
+      "target_column": "LoanStatusID",
+      "target_duplicate_key_rows": 0,
+      "target_file": "loan_statuses.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 333
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "AccountOriginID",
+      "source_file": "transactions.csv",
+      "source_row_count": 50000,
+      "target_column": "AccountID",
+      "target_duplicate_key_rows": 32,
+      "target_file": "accounts.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 50000
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "AccountDestinationID",
+      "source_file": "transactions.csv",
+      "source_row_count": 50000,
+      "target_column": "AccountID",
+      "target_duplicate_key_rows": 32,
+      "target_file": "accounts.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 50000
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "BranchID",
+      "source_file": "transactions.csv",
+      "source_row_count": 50000,
+      "target_column": "BranchID",
+      "target_duplicate_key_rows": 0,
+      "target_file": "branches.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 50000
+    },
+    {
+      "null_reference_count": 0,
+      "orphan_distinct_value_count": 0,
+      "orphan_reference_count": 0,
+      "sample_orphan_values": [],
+      "source_column": "TransactionTypeID",
+      "source_file": "transactions.csv",
+      "source_row_count": 50000,
+      "target_column": "TransactionTypeID",
+      "target_duplicate_key_rows": 0,
+      "target_file": "transaction_types.csv",
+      "target_null_key_count": 0,
+      "valid_reference_count": 50000
+    }
+  ],
+  "source_directory": "data/raw"
+}
