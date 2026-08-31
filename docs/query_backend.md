@@ -45,3 +45,18 @@ response models. The JSON contract uses `schema`, `tables`, `columns`,
 `primary_key` and `foreign_keys`; PostgreSQL connection details are never part
 of the response. If metadata cannot be read, the endpoint returns a sanitized
 `503 Service Unavailable` response.
+
+## Internal query executor
+
+`ReadOnlyQueryExecutor` executes SQL that a future upstream safety layer has
+already approved. It does not parse or validate SQL and is not exposed through
+an HTTP endpoint. Its SQLAlchemy engine must come from the analytical reader
+runtime boundary.
+
+Results contain ordered column names, rows, row count and elapsed milliseconds.
+Integers, strings, booleans and nulls retain their JSON scalar representation;
+precision-sensitive PostgreSQL numeric values become decimal strings; dates and
+timestamps use ISO 8601 strings. Unsupported or non-finite values fail through
+an explicit normalization error. PostgreSQL execution errors are returned as a
+sanitized application error, and the connection is returned to the pool on
+both success and failure.

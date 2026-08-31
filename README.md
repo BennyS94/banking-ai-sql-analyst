@@ -6,9 +6,11 @@ translating questions into validated, read-only PostgreSQL queries.
 Phase 1 implements the trusted data foundation: audited and cleaned banking
 data, PostgreSQL schema and migrations, transactional loading, a
 least-privilege read-only database role, and end-to-end integrity validation.
-Phase 2 is building the query backend. The FastAPI foundation currently exposes
-application-process health at `GET /health`. Groq-backed NL-to-SQL generation,
-SQL validation, Streamlit, and the final application flow are not implemented.
+Phase 2 implements the query backend: FastAPI process health, least-privilege
+PostgreSQL runtime access, banking schema introspection and its typed API, plus
+an internal executor for already-approved analytical SQL. Groq-backed NL-to-SQL
+generation, SQL validation, Streamlit, and the final application flow are not
+implemented.
 
 Install the backend and test dependencies, then start the development API:
 
