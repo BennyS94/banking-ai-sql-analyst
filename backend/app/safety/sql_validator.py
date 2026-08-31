@@ -24,6 +24,12 @@ class SQLSafetyReasonCode(StrEnum):
     ADMINISTRATIVE_STATEMENT = "administrative_statement"
     DATA_MODIFYING_CTE = "data_modifying_cte"
     SELECT_INTO = "select_into"
+    FORBIDDEN_SCHEMA = "forbidden_schema"
+    UNKNOWN_TABLE = "unknown_table"
+    UNKNOWN_COLUMN = "unknown_column"
+    FORBIDDEN_FUNCTION = "forbidden_function"
+    UNKNOWN_FUNCTION = "unknown_function"
+    UNSAFE_SYSTEM_ACCESS = "unsafe_system_access"
 
 
 @dataclass(frozen=True)
