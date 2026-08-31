@@ -51,3 +51,6 @@ The transactional processed-data loading workflow is documented in
 
 The PostgreSQL analytical reader setup is documented in
 [`docs/read_only_role.md`](docs/read_only_role.md).
+
+The complete Phase 1 rebuild and validation sequence is documented in
+[`docs/phase_1_workflow.md`](docs/phase_1_workflow.md).
