@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +11,9 @@ class Settings(BaseSettings):
 
     app_title: str = "Banking AI SQL Analyst API"
     app_version: str = "0.1.0"
+    groq_api_key: SecretStr | None = None
+    groq_model: str = "openai/gpt-oss-120b"
+    groq_reasoning_effort: str = "medium"
     banking_reader_user: str = "banking_reader"
     banking_reader_database_url: str | None = None
 
