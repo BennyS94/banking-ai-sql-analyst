@@ -8,9 +8,10 @@ data, PostgreSQL schema and migrations, transactional loading, a
 least-privilege read-only database role, and end-to-end integrity validation.
 Phase 2 implements the query backend: FastAPI process health, least-privilege
 PostgreSQL runtime access, banking schema introspection and its typed API, plus
-an internal executor for already-approved analytical SQL. Groq-backed NL-to-SQL
-generation, SQL validation, Streamlit, and the final application flow are not
-implemented.
+an internal executor for already-approved analytical SQL. Phase 3 implements
+structured, schema-grounded Groq NL-to-SQL generation and an opt-in live smoke
+workflow. Generated SQL remains untrusted and is not executed. SQL validation,
+Streamlit, and the final application flow are not implemented.
 
 Install the backend and test dependencies, then start the development API:
 
@@ -75,3 +76,6 @@ The complete Phase 1 rebuild and validation sequence is documented in
 
 FastAPI startup and least-privilege runtime PostgreSQL configuration are
 documented in [`docs/query_backend.md`](docs/query_backend.md).
+
+Offline and opt-in live NL-to-SQL generation checks are documented in
+[`docs/nl_to_sql_generation.md`](docs/nl_to_sql_generation.md).
