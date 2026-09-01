@@ -1,0 +1,68 @@
+name: Deterministic tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:17.11-alpine
+        env:
+          POSTGRES_DB: banking_ai_test
+          POSTGRES_USER: banking_test_owner
+          POSTGRES_PASSWORD: workflow-test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U banking_test_owner -d banking_ai_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql+psycopg://banking_test_owner:workflow-test-password@localhost:5432/banking_ai_test
+      BANKING_TEST_OWNER_DATABASE_URL: postgresql+psycopg://banking_test_owner:workflow-test-password@localhost:5432/banking_ai_test
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install project and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+
+      - name: Run adopted static checks
+        run: |
+          python -m compileall -q backend banking_data frontend tests
+          python -m pip check
+
+      - name: Verify PostgreSQL migration setup
+        run: python -m alembic upgrade head
+
+      - name: Run offline unit checks
+        run: |
+          python -m unittest discover -s tests -p "test_groq_client.py" -q
+          python -m unittest discover -s tests -p "test_sql_validator.py" -q
+          python -m unittest discover -s tests -p "test_sql_access_policy.py" -q
+          python -m unittest discover -s tests -p "test_evaluation_reporting.py" -q
+          python -m unittest discover -s tests -p "test_model_comparison.py" -q
+
+      - name: Run PostgreSQL integration and regression suite
+        run: python -m unittest discover -s tests -q

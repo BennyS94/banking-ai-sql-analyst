@@ -101,3 +101,12 @@ Offline and opt-in live NL-to-SQL generation checks are documented in
 
 The explicit live benchmark, result comparison, artifact and resume behavior are
 documented in [`docs/evaluation.md`](docs/evaluation.md).
+
+## Automated tests
+
+The `Deterministic tests` GitHub Actions workflow runs on pushes and pull
+requests to `main`. It provisions PostgreSQL 17, installs the project on Python
+3.13, verifies bytecode compilation and installed dependencies, applies the
+Alembic migration, runs focused offline unit checks, and then runs the complete
+PostgreSQL integration/regression suite. It does not read `GROQ_API_KEY` or run
+live model evaluation; provider behavior is faked by the normal tests.

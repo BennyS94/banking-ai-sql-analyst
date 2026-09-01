@@ -130,7 +130,7 @@ class QueryPresentationSmokeTests(TestCase):
         }
         app.session_state["recent_questions"] = []
 
-        app.run()
+        app.run(timeout=10)
 
         self.assertEqual(app.code[0].value, _response()["sql"])
         self.assertEqual(len(app.dataframe), 1)
@@ -155,7 +155,7 @@ class QueryPresentationSmokeTests(TestCase):
         app.session_state["latest_error"] = None
         app.session_state["recent_questions"] = []
 
-        app.run()
+        app.run(timeout=10)
 
         self.assertTrue(
             any("returned no rows" in item.value for item in app.info)

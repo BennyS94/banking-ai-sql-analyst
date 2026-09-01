@@ -97,7 +97,7 @@ class BankingAPIClientTests(TestCase):
 class StreamlitFoundationTests(TestCase):
     def test_page_foundation_renders_when_backend_is_unavailable(self) -> None:
         app_path = Path(__file__).parents[1] / "frontend" / "app.py"
-        app = AppTest.from_file(str(app_path)).run()
+        app = AppTest.from_file(str(app_path)).run(timeout=10)
 
         self.assertEqual(app.title[0].value, "Banking AI SQL Analyst")
         self.assertEqual(app.text_area[0].label, "Banking question")
@@ -106,9 +106,9 @@ class StreamlitFoundationTests(TestCase):
 
     def test_empty_submission_is_handled_cleanly(self) -> None:
         app_path = Path(__file__).parents[1] / "frontend" / "app.py"
-        app = AppTest.from_file(str(app_path)).run()
+        app = AppTest.from_file(str(app_path)).run(timeout=10)
 
-        app.button[0].click().run()
+        app.button[0].click().run(timeout=10)
 
         self.assertIn("Enter a banking analytics question", app.warning[0].value)
         self.assertEqual(len(app.exception), 0)

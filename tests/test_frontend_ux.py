@@ -122,7 +122,7 @@ class ResilientStreamlitSmokeTests(TestCase):
                     "response": {"status": status, "message": message},
                 }
 
-                app.run()
+                app.run(timeout=10)
 
                 self.assertTrue(
                     any(expected_title in item.value for item in app.subheader)
@@ -139,7 +139,7 @@ class ResilientStreamlitSmokeTests(TestCase):
             message="No query was executed.",
         )
 
-        app.run()
+        app.run(timeout=10)
 
         self.assertIn("No query was executed", app.error[0].value)
         self.assertEqual(len(app.exception), 0)
