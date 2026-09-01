@@ -36,6 +36,21 @@ language, difficulty, category, and expected-status detail. Each new run also
 records a deterministic safety snapshot from the stable Phase 4 adversarial
 corpus and the trusted answerable benchmark SQL, keeping attack block rate and
 legitimate-query false-positive rejection rate separate.
+
+Compare one complete controlled run for each candidate with:
+
+```powershell
+python -m backend.app.evaluation.model_comparison `
+  --run evaluation/results/GPT_OSS_20B_RUN.json `
+  --run evaluation/results/GPT_OSS_120B_RUN.json
+```
+
+The comparison rejects partial runs, mismatched benchmark coverage, prompt
+fingerprints, reasoning effort, or generation configuration. Optional repeated
+subset runs can be supplied with repeated `--stability-run` arguments, with
+matching coverage and repeat counts required for both models. The generated
+technical recommendation is an input to Phase 6 Review and does not change the
+configured default model.
 Generated SQL always passes structural validation, banking access validation,
 and the hardened read-only PostgreSQL executor. Trusted project-authored
 reference SQL uses the read-only executor separately. Correctness compares
