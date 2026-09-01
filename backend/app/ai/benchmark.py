@@ -32,6 +32,12 @@ BenchmarkCategory = Literal[
     "having",
     "subquery_cte",
     "window_function",
+    "single_table",
+    "null_semantics",
+    "negative_balance",
+    "transaction_semantics",
+    "loan_account",
+    "branch_analytics",
     "unanswerable",
     "ambiguous",
 ]
@@ -53,6 +59,7 @@ class BenchmarkCase(BaseModel):
     expected_status: GenerationStatus
     comparison_mode: ComparisonMode | None = None
     numeric_tolerance: Decimal | None = None
+    pair_id: str | None = None
     reference_sql: str | None
 
     @field_validator("id", "question")
@@ -60,6 +67,15 @@ class BenchmarkCase(BaseModel):
     def require_text(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("benchmark text must be non-empty")
+        return value.strip()
+
+    @field_validator("pair_id")
+    @classmethod
+    def normalize_pair_id(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if not value.strip():
+            raise ValueError("benchmark pair ID must be non-empty")
         return value.strip()
 
     @model_validator(mode="after")
@@ -93,14 +109,31 @@ def load_banking_benchmark(path: Path | None = None) -> tuple[BenchmarkCase, ...
             "Banking benchmark is missing or invalid"
         ) from exc
 
-    if not 20 <= len(cases) <= 25:
-        raise BenchmarkValidationError("Banking benchmark must contain 20 to 25 cases")
+    if not 45 <= len(cases) <= 60:
+        raise BenchmarkValidationError("Banking benchmark must contain 45 to 60 cases")
     ids = [case.id for case in cases]
     questions = [_normalize_question(case.question) for case in cases]
     if len(ids) != len(set(ids)):
         raise BenchmarkValidationError("Benchmark IDs must be unique")
     if len(questions) != len(set(questions)):
         raise BenchmarkValidationError("Benchmark questions must be unique")
+    pair_ids = {case.pair_id for case in cases if case.pair_id is not None}
+    for pair_id in pair_ids:
+        pair = tuple(case for case in cases if case.pair_id == pair_id)
+        reference_sql = {
+            _normalize_sql(case.reference_sql)
+            for case in pair
+            if case.reference_sql is not None
+        }
+        if (
+            len(pair) != 2
+            or {case.language for case in pair} != {"en", "ro"}
+            or len({case.expected_status for case in pair}) != 1
+            or len(reference_sql) > 1
+        ):
+            raise BenchmarkValidationError(
+                "Cross-language pairs must contain equivalent EN and RO cases"
+            )
     return cases
 
 
@@ -116,7 +149,25 @@ def validate_few_shot_separation(
         raise BenchmarkValidationError(
             "Benchmark questions must not overlap few-shot examples"
         )
+    benchmark_sql = {
+        _normalize_sql(case.reference_sql)
+        for case in cases
+        if case.reference_sql is not None
+    }
+    few_shot_sql = {
+        _normalize_sql(example.output.sql)
+        for example in examples
+        if example.output.sql is not None
+    }
+    if benchmark_sql & few_shot_sql:
+        raise BenchmarkValidationError(
+            "Benchmark reference SQL must not overlap few-shot SQL"
+        )
 
 
 def _normalize_question(question: str) -> str:
     return re.sub(r"\s+", " ", question).strip().casefold()
+
+
+def _normalize_sql(statement: str) -> str:
+    return re.sub(r"\s+", " ", statement).strip().rstrip(";").casefold()

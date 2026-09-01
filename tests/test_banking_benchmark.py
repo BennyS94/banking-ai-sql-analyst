@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from collections import Counter
 from unittest import TestCase, mock
 from uuid import uuid4
 
@@ -16,9 +17,12 @@ from backend.app.ai.benchmark import (
     validate_few_shot_separation,
 )
 from backend.app.ai.prompt import load_few_shot_examples
+from backend.app.ai.groq_client import StructuredGeneration
 from backend.app.core.config import Settings
 from backend.app.db.engine import create_runtime_engine
 from backend.app.db.query_executor import ReadOnlyQueryExecutor
+from backend.app.safety.access_policy import BankingSQLAccessPolicy
+from backend.app.safety.sql_validator import SQLASTValidator
 from banking_data.role_management import (
     _psycopg_connection_string,
     provision_reader_role,
@@ -32,7 +36,7 @@ class BankingBenchmarkIntegrityTests(TestCase):
         cls.cases = load_banking_benchmark()
 
     def test_case_count_ids_questions_and_contracts_are_valid(self) -> None:
-        self.assertEqual(len(self.cases), 23)
+        self.assertEqual(len(self.cases), 52)
         self.assertEqual(len({case.id for case in self.cases}), len(self.cases))
         self.assertEqual(
             len({case.question.casefold() for case in self.cases}), len(self.cases)
@@ -41,8 +45,10 @@ class BankingBenchmarkIntegrityTests(TestCase):
             self.assertTrue(case.question.strip())
             if case.expected_status == "answerable":
                 self.assertTrue(case.reference_sql)
+                self.assertIsNotNone(case.comparison_mode)
             else:
                 self.assertIsNone(case.reference_sql)
+                self.assertIsNone(case.comparison_mode)
 
     def test_languages_categories_and_statuses_are_represented(self) -> None:
         self.assertEqual({case.language for case in self.cases}, {"en", "ro"})
@@ -62,10 +68,35 @@ class BankingBenchmarkIntegrityTests(TestCase):
                 "having",
                 "subquery_cte",
                 "window_function",
+                "single_table",
+                "null_semantics",
+                "negative_balance",
+                "transaction_semantics",
+                "loan_account",
+                "branch_analytics",
                 "unanswerable",
                 "ambiguous",
             }.issubset({case.category for case in self.cases})
         )
+
+    def test_benchmark_distribution_and_cross_language_pairs_are_balanced(self) -> None:
+        self.assertEqual(Counter(case.language for case in self.cases), {"en": 35, "ro": 17})
+        self.assertEqual(
+            Counter(case.difficulty for case in self.cases),
+            {"easy": 20, "medium": 21, "hard": 11},
+        )
+        self.assertEqual(
+            Counter(case.expected_status for case in self.cases),
+            {"answerable": 40, "unanswerable": 7, "ambiguous": 5},
+        )
+        paired = [case for case in self.cases if case.pair_id is not None]
+        self.assertEqual(len(paired), 6)
+        for pair_id in {case.pair_id for case in paired}:
+            pair = [case for case in paired if case.pair_id == pair_id]
+            self.assertEqual({case.language for case in pair}, {"en", "ro"})
+            self.assertEqual(
+                {case.reference_sql for case in pair}, {pair[0].reference_sql}
+            )
 
     def test_benchmark_has_no_exact_overlap_with_few_shot_questions(self) -> None:
         validate_few_shot_separation(self.cases, load_few_shot_examples())
@@ -77,6 +108,20 @@ class BankingBenchmarkIntegrityTests(TestCase):
         )
         with self.assertRaises(BenchmarkValidationError):
             validate_few_shot_separation((overlapping,), examples)
+
+    def test_reference_sql_cannot_overlap_few_shot_sql(self) -> None:
+        examples = load_few_shot_examples()
+        leaking = examples[0].model_copy(
+            update={
+                "output": StructuredGeneration(
+                    status="answerable",
+                    sql=f"  {self.cases[0].reference_sql};  ",
+                    message=None,
+                )
+            }
+        )
+        with self.assertRaises(BenchmarkValidationError):
+            validate_few_shot_separation(self.cases, (leaking,))
 
 
 class BankingBenchmarkReferenceSQLTests(TestCase):
@@ -107,6 +152,8 @@ class BankingBenchmarkReferenceSQLTests(TestCase):
             )
         )
         cls.executor = ReadOnlyQueryExecutor(cls.engine)
+        cls.structural_validator = SQLASTValidator()
+        cls.access_policy = BankingSQLAccessPolicy.from_engine(cls.engine)
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -129,5 +176,8 @@ class BankingBenchmarkReferenceSQLTests(TestCase):
 
         for case in answerable:
             with self.subTest(case=case.id):
+                structural = self.structural_validator.validate(case.reference_sql or "")
+                self.assertTrue(structural.accepted)
+                self.assertTrue(self.access_policy.validate(structural).accepted)
                 result = self.executor.execute(case.reference_sql or "")
                 self.assertGreaterEqual(result.row_count, 0)

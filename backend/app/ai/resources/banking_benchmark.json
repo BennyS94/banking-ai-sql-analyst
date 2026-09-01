@@ -27,6 +27,7 @@
     "question": "Arată conturile de salariu care au sold negativ.",
     "expected_status": "answerable",
     "comparison_mode": "unordered_rows",
+    "pair_id": "payroll_negative_accounts",
     "reference_sql": "SELECT a.account_id, a.balance FROM banking.accounts AS a JOIN banking.account_types AS t ON t.account_type_id = a.account_type_id WHERE t.type_name = 'Payroll' AND a.balance < 0 ORDER BY a.account_id"
   },
   {
@@ -127,6 +128,7 @@
     "question": "Care sunt primele trei sucursale după numărul de tranzacții?",
     "expected_status": "answerable",
     "comparison_mode": "ordered_rows",
+    "pair_id": "top_three_branches_by_transaction_count",
     "reference_sql": "SELECT b.branch_id, b.branch_name, COUNT(*) AS transaction_count FROM banking.branches AS b JOIN banking.transactions AS tr ON tr.branch_id = b.branch_id GROUP BY b.branch_id, b.branch_name ORDER BY transaction_count DESC, b.branch_id LIMIT 3"
   },
   {
@@ -177,6 +179,7 @@
     "question": "Arată cea mai recentă tranzacție pentru fiecare cont de origine.",
     "expected_status": "answerable",
     "comparison_mode": "unordered_rows",
+    "pair_id": "latest_transaction_per_origin_account",
     "reference_sql": "WITH ranked_transactions AS (SELECT tr.transaction_id, tr.account_origin_id, tr.transaction_date, tr.amount, ROW_NUMBER() OVER (PARTITION BY tr.account_origin_id ORDER BY tr.transaction_date DESC, tr.transaction_id DESC) AS row_number FROM banking.transactions AS tr) SELECT transaction_id, account_origin_id, transaction_date, amount FROM ranked_transactions WHERE row_number = 1 ORDER BY account_origin_id"
   },
   {
@@ -221,6 +224,292 @@
     "difficulty": "easy",
     "language": "ro",
     "question": "Arată toate tranzacțiile mari.",
+    "expected_status": "ambiguous",
+    "reference_sql": null
+  },
+  {
+    "id": "negative_balance_001",
+    "category": "negative_balance",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "Show payroll accounts with a negative recorded balance.",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "pair_id": "payroll_negative_accounts",
+    "reference_sql": "SELECT a.account_id, a.balance FROM banking.accounts AS a JOIN banking.account_types AS t ON t.account_type_id = a.account_type_id WHERE t.type_name = 'Payroll' AND a.balance < 0 ORDER BY a.account_id"
+  },
+  {
+    "id": "negative_balance_002_ro",
+    "category": "negative_balance",
+    "difficulty": "medium",
+    "language": "ro",
+    "question": "Câte conturi cu sold negativ există pentru fiecare tip de cont?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT t.type_name, COUNT(*) AS negative_account_count FROM banking.accounts AS a JOIN banking.account_types AS t ON t.account_type_id = a.account_type_id WHERE a.balance < 0 GROUP BY t.type_name ORDER BY t.type_name"
+  },
+  {
+    "id": "transaction_semantics_001",
+    "category": "transaction_semantics",
+    "difficulty": "easy",
+    "language": "en",
+    "question": "How many withdrawal transactions are recorded?",
+    "expected_status": "answerable",
+    "comparison_mode": "scalar",
+    "reference_sql": "SELECT COUNT(*) AS withdrawal_count FROM banking.transactions AS tr JOIN banking.transaction_types AS tt ON tt.transaction_type_id = tr.transaction_type_id WHERE tt.type_name = 'Withdrawal'"
+  },
+  {
+    "id": "transaction_semantics_002_ro",
+    "category": "transaction_semantics",
+    "difficulty": "easy",
+    "language": "ro",
+    "question": "Care este valoarea medie înregistrată a tranzacțiilor de tip plată?",
+    "expected_status": "answerable",
+    "comparison_mode": "scalar",
+    "reference_sql": "SELECT AVG(tr.amount) AS average_payment_amount FROM banking.transactions AS tr JOIN banking.transaction_types AS tt ON tt.transaction_type_id = tr.transaction_type_id WHERE tt.type_name = 'Payment'"
+  },
+  {
+    "id": "transaction_semantics_003",
+    "category": "transaction_semantics",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "Count transfer transactions recorded by each branch.",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT b.branch_id, b.branch_name, COUNT(*) AS transfer_count FROM banking.branches AS b JOIN banking.transactions AS tr ON tr.branch_id = b.branch_id JOIN banking.transaction_types AS tt ON tt.transaction_type_id = tr.transaction_type_id WHERE tt.type_name = 'Transfer' GROUP BY b.branch_id, b.branch_name ORDER BY b.branch_id"
+  },
+  {
+    "id": "loan_account_001",
+    "category": "loan_account",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "Which accounts are linked to more than one loan?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT a.account_id, COUNT(l.loan_id) AS loan_count FROM banking.accounts AS a JOIN banking.loans AS l ON l.account_id = a.account_id GROUP BY a.account_id HAVING COUNT(l.loan_id) > 1 ORDER BY a.account_id"
+  },
+  {
+    "id": "loan_account_002_ro",
+    "category": "loan_account",
+    "difficulty": "hard",
+    "language": "ro",
+    "question": "Care este suma principalului împrumuturilor pentru fiecare stare a contului asociat?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT s.status_name, SUM(l.principal_amount) AS total_principal FROM banking.loans AS l JOIN banking.accounts AS a ON a.account_id = l.account_id JOIN banking.account_statuses AS s ON s.account_status_id = a.account_status_id GROUP BY s.status_name ORDER BY s.status_name"
+  },
+  {
+    "id": "loan_account_003",
+    "category": "loan_account",
+    "difficulty": "hard",
+    "language": "en",
+    "question": "Which customers have no loan linked to any of their accounts?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT c.customer_id, c.first_name, c.last_name FROM banking.customers AS c LEFT JOIN banking.accounts AS a ON a.customer_id = c.customer_id LEFT JOIN banking.loans AS l ON l.account_id = a.account_id GROUP BY c.customer_id, c.first_name, c.last_name HAVING COUNT(l.loan_id) = 0 ORDER BY c.customer_id"
+  },
+  {
+    "id": "branch_analytics_001",
+    "category": "branch_analytics",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "What is the average recorded transaction amount for each branch with transactions?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT b.branch_id, b.branch_name, AVG(tr.amount) AS average_transaction_amount FROM banking.branches AS b JOIN banking.transactions AS tr ON tr.branch_id = b.branch_id GROUP BY b.branch_id, b.branch_name ORDER BY b.branch_id"
+  },
+  {
+    "id": "branch_analytics_002",
+    "category": "branch_analytics",
+    "difficulty": "easy",
+    "language": "en",
+    "question": "Which branches have no recorded transactions?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT b.branch_id, b.branch_name FROM banking.branches AS b LEFT JOIN banking.transactions AS tr ON tr.branch_id = b.branch_id WHERE tr.transaction_id IS NULL ORDER BY b.branch_id"
+  },
+  {
+    "id": "null_semantics_001",
+    "category": "null_semantics",
+    "difficulty": "easy",
+    "language": "en",
+    "question": "How many customers are missing either a first name or a last name?",
+    "expected_status": "answerable",
+    "comparison_mode": "scalar",
+    "reference_sql": "SELECT COUNT(*) AS customer_count FROM banking.customers WHERE first_name IS NULL OR last_name IS NULL"
+  },
+  {
+    "id": "null_semantics_002",
+    "category": "null_semantics",
+    "difficulty": "easy",
+    "language": "en",
+    "question": "List loans that have no estimated end date.",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT loan_id, account_id, start_date FROM banking.loans WHERE estimated_end_date IS NULL ORDER BY loan_id"
+  },
+  {
+    "id": "null_semantics_003",
+    "category": "null_semantics",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "For addresses with no recorded city, count the customers linked to each address.",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT ad.address_id, COUNT(c.customer_id) AS customer_count FROM banking.addresses AS ad JOIN banking.customers AS c ON c.address_id = ad.address_id WHERE ad.city IS NULL GROUP BY ad.address_id ORDER BY ad.address_id"
+  },
+  {
+    "id": "ranking_003",
+    "category": "ranking",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "What are the top three branches by recorded transaction count?",
+    "expected_status": "answerable",
+    "comparison_mode": "ordered_rows",
+    "pair_id": "top_three_branches_by_transaction_count",
+    "reference_sql": "SELECT b.branch_id, b.branch_name, COUNT(*) AS transaction_count FROM banking.branches AS b JOIN banking.transactions AS tr ON tr.branch_id = b.branch_id GROUP BY b.branch_id, b.branch_name ORDER BY transaction_count DESC, b.branch_id LIMIT 3"
+  },
+  {
+    "id": "window_002",
+    "category": "window_function",
+    "difficulty": "hard",
+    "language": "en",
+    "question": "Show the most recent transaction for every origin account.",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "pair_id": "latest_transaction_per_origin_account",
+    "reference_sql": "WITH ranked_transactions AS (SELECT tr.transaction_id, tr.account_origin_id, tr.transaction_date, tr.amount, ROW_NUMBER() OVER (PARTITION BY tr.account_origin_id ORDER BY tr.transaction_date DESC, tr.transaction_id DESC) AS row_number FROM banking.transactions AS tr) SELECT transaction_id, account_origin_id, transaction_date, amount FROM ranked_transactions WHERE row_number = 1 ORDER BY account_origin_id"
+  },
+  {
+    "id": "window_003_ro",
+    "category": "window_function",
+    "difficulty": "hard",
+    "language": "ro",
+    "question": "Clasifică soldurile conturilor în ordine descrescătoare în cadrul fiecărui tip de cont.",
+    "expected_status": "answerable",
+    "comparison_mode": "ordered_rows",
+    "reference_sql": "SELECT t.type_name, a.account_id, a.balance, ROW_NUMBER() OVER (PARTITION BY t.type_name ORDER BY a.balance DESC, a.account_id) AS balance_rank FROM banking.accounts AS a JOIN banking.account_types AS t ON t.account_type_id = a.account_type_id ORDER BY t.type_name, balance_rank"
+  },
+  {
+    "id": "subquery_002",
+    "category": "subquery_cte",
+    "difficulty": "hard",
+    "language": "en",
+    "question": "Which accounts have the lowest recorded balance within their account type?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "WITH ranked_accounts AS (SELECT a.account_id, t.type_name, a.balance, RANK() OVER (PARTITION BY t.type_name ORDER BY a.balance ASC) AS balance_rank FROM banking.accounts AS a JOIN banking.account_types AS t ON t.account_type_id = a.account_type_id) SELECT account_id, type_name, balance FROM ranked_accounts WHERE balance_rank = 1 ORDER BY type_name, account_id"
+  },
+  {
+    "id": "cte_002_ro",
+    "category": "subquery_cte",
+    "difficulty": "hard",
+    "language": "ro",
+    "question": "Pentru fiecare tip de client, ce tip de tranzacție are cea mai mare sumă înregistrată din conturile de origine?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "WITH transaction_totals AS (SELECT ct.type_name AS customer_type, tt.type_name AS transaction_type, SUM(tr.amount) AS total_amount FROM banking.transactions AS tr JOIN banking.accounts AS a ON a.account_id = tr.account_origin_id JOIN banking.customers AS c ON c.customer_id = a.customer_id JOIN banking.customer_types AS ct ON ct.customer_type_id = c.customer_type_id JOIN banking.transaction_types AS tt ON tt.transaction_type_id = tr.transaction_type_id GROUP BY ct.type_name, tt.type_name), ranked_totals AS (SELECT customer_type, transaction_type, total_amount, RANK() OVER (PARTITION BY customer_type ORDER BY total_amount DESC) AS amount_rank FROM transaction_totals) SELECT customer_type, transaction_type, total_amount FROM ranked_totals WHERE amount_rank = 1 ORDER BY customer_type, transaction_type"
+  },
+  {
+    "id": "temporal_003",
+    "category": "temporal",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "What was the summed recorded transaction amount for each day in January 2023?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT CAST(tr.transaction_date AS DATE) AS transaction_day, SUM(tr.amount) AS total_amount FROM banking.transactions AS tr WHERE tr.transaction_date >= TIMESTAMP '2023-01-01 00:00:00' AND tr.transaction_date < TIMESTAMP '2023-02-01 00:00:00' GROUP BY CAST(tr.transaction_date AS DATE) ORDER BY transaction_day"
+  },
+  {
+    "id": "temporal_004_ro",
+    "category": "temporal",
+    "difficulty": "medium",
+    "language": "ro",
+    "question": "Ce împrumuturi au data estimată de încheiere înaintea datei de început înregistrate?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT loan_id, account_id, start_date, estimated_end_date FROM banking.loans WHERE estimated_end_date < start_date ORDER BY loan_id"
+  },
+  {
+    "id": "single_table_001",
+    "category": "single_table",
+    "difficulty": "easy",
+    "language": "en",
+    "question": "How many accounts have no recorded opening date?",
+    "expected_status": "answerable",
+    "comparison_mode": "scalar",
+    "reference_sql": "SELECT COUNT(*) AS account_count FROM banking.accounts WHERE opening_date IS NULL"
+  },
+  {
+    "id": "multi_join_003",
+    "category": "multi_table_join",
+    "difficulty": "hard",
+    "language": "en",
+    "question": "What is the summed recorded amount of transactions from origin accounts for each customer type?",
+    "expected_status": "answerable",
+    "comparison_mode": "unordered_rows",
+    "reference_sql": "SELECT ct.type_name, SUM(tr.amount) AS total_origin_transaction_amount FROM banking.transactions AS tr JOIN banking.accounts AS a ON a.account_id = tr.account_origin_id JOIN banking.customers AS c ON c.customer_id = a.customer_id JOIN banking.customer_types AS ct ON ct.customer_type_id = c.customer_type_id GROUP BY ct.type_name ORDER BY ct.type_name"
+  },
+  {
+    "id": "unanswerable_004",
+    "category": "unanswerable",
+    "difficulty": "easy",
+    "language": "en",
+    "question": "What is each customer's annual salary?",
+    "expected_status": "unanswerable",
+    "reference_sql": null
+  },
+  {
+    "id": "unanswerable_005",
+    "category": "unanswerable",
+    "difficulty": "easy",
+    "language": "en",
+    "question": "Which accounts have exceeded their assigned credit limit?",
+    "expected_status": "unanswerable",
+    "reference_sql": null
+  },
+  {
+    "id": "unanswerable_006",
+    "category": "unanswerable",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "Convert every account balance to euros using today's exchange rate.",
+    "expected_status": "unanswerable",
+    "reference_sql": null
+  },
+  {
+    "id": "unanswerable_007_ro",
+    "category": "unanswerable",
+    "difficulty": "medium",
+    "language": "ro",
+    "question": "Care angajați ai sucursalelor au cele mai bune evaluări de performanță?",
+    "expected_status": "unanswerable",
+    "reference_sql": null
+  },
+  {
+    "id": "ambiguous_003",
+    "category": "ambiguous",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "Which accounts are the most active?",
+    "expected_status": "ambiguous",
+    "reference_sql": null
+  },
+  {
+    "id": "ambiguous_004",
+    "category": "ambiguous",
+    "difficulty": "medium",
+    "language": "en",
+    "question": "Show recently acquired customers.",
+    "expected_status": "ambiguous",
+    "reference_sql": null
+  },
+  {
+    "id": "ambiguous_005_ro",
+    "category": "ambiguous",
+    "difficulty": "hard",
+    "language": "ro",
+    "question": "Care sunt împrumuturile riscante?",
     "expected_status": "ambiguous",
     "reference_sql": null
   }
