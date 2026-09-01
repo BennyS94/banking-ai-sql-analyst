@@ -5,7 +5,7 @@ from unittest import IsolatedAsyncioTestCase, TestCase, mock
 
 from httpx import ASGITransport, AsyncClient
 
-from backend.app.core.config import Settings, get_settings
+from backend.app.core.config import DEFAULT_GROQ_MODEL, Settings, get_settings
 from backend.app.db.engine import (
     dispose_runtime_engine,
     get_runtime_engine,
@@ -40,6 +40,13 @@ class BackendFoundationTests(TestCase):
         self.assertEqual(settings.app_version, "2.1.0")
         self.assertEqual(settings.query_statement_timeout_ms, 2_500)
         self.assertEqual(settings.query_max_rows, 125)
+
+    def test_evaluated_model_is_the_default(self) -> None:
+        with mock.patch.dict(os.environ, {}, clear=True):
+            settings = Settings(_env_file=None)
+
+        self.assertEqual(DEFAULT_GROQ_MODEL, "openai/gpt-oss-20b")
+        self.assertEqual(settings.groq_model, DEFAULT_GROQ_MODEL)
 
     def test_repeated_cleanup_without_initialized_engine_is_safe(self) -> None:
         get_runtime_engine.cache_clear()

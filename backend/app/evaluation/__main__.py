@@ -12,7 +12,7 @@ from backend.app.ai.context import BankingAIContextBuilder
 from backend.app.ai.groq_client import GroqStructuredGenerationClient, ReasoningEffort
 from backend.app.ai.prompt import NLToSQLPromptBuilder
 from backend.app.ai.service import NLToSQLService
-from backend.app.core.config import Settings
+from backend.app.core.config import DEFAULT_GROQ_MODEL, Settings
 from backend.app.db.engine import create_runtime_engine
 from backend.app.db.query_executor import ReadOnlyQueryExecutor
 from backend.app.evaluation.persistence import EvaluationRunStore
@@ -153,7 +153,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run the live NL-to-SQL benchmark through the safe pipeline"
     )
-    parser.add_argument("--model", default="openai/gpt-oss-120b")
+    parser.add_argument("--model", default=DEFAULT_GROQ_MODEL)
     parser.add_argument(
         "--reasoning-effort", choices=("low", "medium", "high"), default="medium"
     )

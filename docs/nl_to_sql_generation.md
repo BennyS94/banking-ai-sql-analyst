@@ -15,7 +15,7 @@ read-only database settings in the environment or an untracked `.env` file:
 
 ```text
 GROQ_API_KEY=<your key>
-GROQ_MODEL=openai/gpt-oss-120b
+GROQ_MODEL=openai/gpt-oss-20b
 GROQ_REASONING_EFFORT=medium
 BANKING_READER_USER=banking_reader
 BANKING_READER_DATABASE_URL=postgresql+psycopg://banking_reader:<password>@localhost:5432/banking_ai

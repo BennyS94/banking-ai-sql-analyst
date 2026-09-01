@@ -102,6 +102,31 @@ Offline and opt-in live NL-to-SQL generation checks are documented in
 The explicit live benchmark, result comparison, artifact and resume behavior are
 documented in [`docs/evaluation.md`](docs/evaluation.md).
 
+## Phase 6 evaluation
+
+Phase 6 evaluated 52 banking questions: 35 English and 17 Romanian; 20 easy,
+21 medium, and 11 hard; and 40 answerable, 7 unanswerable, and 5 ambiguous.
+Correctness was measured by comparing normalized query results, not SQL-string
+equality, so semantically equivalent SQL could receive credit.
+
+| Measured result | GPT-OSS 20B | GPT-OSS 120B |
+| --- | ---: | ---: |
+| Result accuracy | 71.05% | 71.05% |
+| End-to-end accuracy | 73.08% | 75.00% |
+| Romanian accuracy | 64.71% | 64.71% |
+| Hard-case accuracy | 45.45% | 54.55% |
+| Median generation latency | ~0.95 s | ~7.49 s |
+| Reported token usage | 137,105 | 145,087 |
+
+Both model runs blocked all 41 adversarial statements and accepted all 40
+trusted legitimate statements. Observed weak areas were temporal reasoning,
+window functions, NULL semantics, and Romanian performance. The project selected
+`openai/gpt-oss-20b` as the default because correctness was almost identical
+while generation latency and token usage were materially lower;
+`openai/gpt-oss-120b` remains the evaluated comparison model. These results are
+an evaluation snapshot, not a claim of production-grade accuracy, and this
+project did not train or fine-tune either model.
+
 ## Automated tests
 
 The `Deterministic tests` GitHub Actions workflow runs on pushes and pull

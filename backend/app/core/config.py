@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_QUERY_STATEMENT_TIMEOUT_MS = 5_000
 DEFAULT_QUERY_MAX_ROWS = 500
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b"
 
 
 class Settings(BaseSettings):
@@ -16,7 +17,7 @@ class Settings(BaseSettings):
     app_title: str = "Banking AI SQL Analyst API"
     app_version: str = "0.1.0"
     groq_api_key: SecretStr | None = None
-    groq_model: str = "openai/gpt-oss-120b"
+    groq_model: str = DEFAULT_GROQ_MODEL
     groq_reasoning_effort: str = "medium"
     banking_reader_user: str = "banking_reader"
     banking_reader_database_url: str | None = None

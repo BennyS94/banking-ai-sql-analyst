@@ -5,8 +5,12 @@ execution. Configure the least-privilege banking reader and `GROQ_API_KEY`, then
 run the complete tracked benchmark with:
 
 ```powershell
-python -m backend.app.evaluation --model openai/gpt-oss-120b
+python -m backend.app.evaluation
 ```
+
+The command defaults to the Phase 6-selected `openai/gpt-oss-20b` model. Pass
+`--model openai/gpt-oss-120b` explicitly to reproduce the evaluated comparison
+model run.
 
 Use `--case-id CASE_ID` repeatedly or `--category CATEGORY` to select a subset.
 Each completed case is atomically persisted under the ignored
@@ -14,8 +18,11 @@ Each completed case is atomically persisted under the ignored
 repeating completed stable case IDs:
 
 ```powershell
-python -m backend.app.evaluation --model openai/gpt-oss-120b --resume evaluation/results/RUN_ID.json
+python -m backend.app.evaluation --resume evaluation/results/RUN_ID.json
 ```
+
+This example assumes a 20B artifact; when resuming a 120B comparison artifact,
+repeat `--model openai/gpt-oss-120b`.
 
 Resume rejects changes to the model, reasoning effort, selected benchmark,
 prompt/context fingerprint, statement timeout, or evaluation row limit.
@@ -49,8 +56,8 @@ The comparison rejects partial runs, mismatched benchmark coverage, prompt
 fingerprints, reasoning effort, or generation configuration. Optional repeated
 subset runs can be supplied with repeated `--stability-run` arguments, with
 matching coverage and repeat counts required for both models. The generated
-technical recommendation is an input to Phase 6 Review and does not change the
-configured default model.
+technical recommendation records measured comparison evidence but does not
+mutate the configured default model.
 Generated SQL always passes structural validation, banking access validation,
 and the hardened read-only PostgreSQL executor. Trusted project-authored
 reference SQL uses the read-only executor separately. Correctness compares

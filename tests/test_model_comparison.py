@@ -193,7 +193,9 @@ class ModelComparisonTests(TestCase):
 
         self.assertIn("| End-to-end accuracy | 75.00% | 100.00% |", report)
         self.assertIn("## Language end-to-end accuracy", report)
-        self.assertIn("The project default is unchanged", report)
+        self.assertIn(
+            "This report does not mutate the configured project default", report
+        )
         with TemporaryDirectory() as directory:
             json_path, markdown_path = write_model_comparison(
                 comparison, Path(directory)

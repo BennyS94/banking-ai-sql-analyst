@@ -177,7 +177,7 @@ def render_model_comparison(comparison: ModelComparison) -> str:
             "",
             comparison.technical_recommendation,
             "",
-            "The project default is unchanged; final selection belongs to Phase 6 Review.",
+            "This report does not mutate the configured project default.",
         )
     )
     return "\n".join(lines) + "\n"
