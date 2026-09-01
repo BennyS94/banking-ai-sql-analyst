@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from importlib.resources import files
 import json
 from pathlib import Path
@@ -34,6 +35,7 @@ BenchmarkCategory = Literal[
     "unanswerable",
     "ambiguous",
 ]
+ComparisonMode = Literal["scalar", "ordered_rows", "unordered_rows"]
 
 
 class BenchmarkValidationError(RuntimeError):
@@ -49,6 +51,8 @@ class BenchmarkCase(BaseModel):
     language: Literal["en", "ro"]
     question: str
     expected_status: GenerationStatus
+    comparison_mode: ComparisonMode | None = None
+    numeric_tolerance: Decimal | None = None
     reference_sql: str | None
 
     @field_validator("id", "question")
@@ -63,8 +67,16 @@ class BenchmarkCase(BaseModel):
         sql = self.reference_sql.strip() if self.reference_sql is not None else None
         if self.expected_status == "answerable" and not sql:
             raise ValueError("answerable benchmark cases require reference SQL")
+        if self.expected_status == "answerable" and self.comparison_mode is None:
+            raise ValueError("answerable benchmark cases require a comparison mode")
         if self.expected_status != "answerable" and self.reference_sql is not None:
             raise ValueError("non-answerable benchmark cases require null SQL")
+        if self.expected_status != "answerable" and self.comparison_mode is not None:
+            raise ValueError("non-answerable benchmark cases require no comparison mode")
+        if self.expected_status != "answerable" and self.numeric_tolerance is not None:
+            raise ValueError("non-answerable benchmark cases require no numeric tolerance")
+        if self.numeric_tolerance is not None and self.numeric_tolerance < 0:
+            raise ValueError("numeric tolerance must be non-negative")
         return self
 
 

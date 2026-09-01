@@ -31,3 +31,6 @@ AGENTS.md
 
 # Generated data
 data/processed/
+
+# Live evaluation artifacts
+evaluation/results/

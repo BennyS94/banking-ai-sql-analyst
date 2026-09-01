@@ -98,3 +98,6 @@ documented in [`docs/query_backend.md`](docs/query_backend.md).
 
 Offline and opt-in live NL-to-SQL generation checks are documented in
 [`docs/nl_to_sql_generation.md`](docs/nl_to_sql_generation.md).
+
+The explicit live benchmark, result comparison, artifact and resume behavior are
+documented in [`docs/evaluation.md`](docs/evaluation.md).
