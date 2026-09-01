@@ -82,7 +82,7 @@ class GroqStructuredGenerationClientTests(TestCase):
 
         self.assertEqual(result.output.sql, "SELECT 1")
         request = self.completions.create.call_args.kwargs
-        self.assertEqual(request["model"], "openai/gpt-oss-120b")
+        self.assertEqual(request["model"], "openai/gpt-oss-20b")
         self.assertEqual(request["reasoning_effort"], "medium")
         self.assertEqual(request["reasoning_format"], "hidden")
         self.assertNotIn("tools", request)
