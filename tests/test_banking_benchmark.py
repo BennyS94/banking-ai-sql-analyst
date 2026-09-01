@@ -23,6 +23,7 @@ from backend.app.db.engine import create_runtime_engine
 from backend.app.db.query_executor import ReadOnlyQueryExecutor
 from backend.app.safety.access_policy import BankingSQLAccessPolicy
 from backend.app.safety.sql_validator import SQLASTValidator
+from backend.app.evaluation.safety_metrics import evaluate_safety_policy
 from banking_data.role_management import (
     _psycopg_connection_string,
     provision_reader_role,
@@ -181,3 +182,13 @@ class BankingBenchmarkReferenceSQLTests(TestCase):
                 self.assertTrue(self.access_policy.validate(structural).accepted)
                 result = self.executor.execute(case.reference_sql or "")
                 self.assertGreaterEqual(result.row_count, 0)
+
+    def test_safety_metrics_separate_attacks_and_legitimate_sql(self) -> None:
+        result = evaluate_safety_policy(
+            load_banking_benchmark(), self.access_policy
+        )
+        self.assertEqual(result.adversarial_total, 41)
+        self.assertEqual(result.adversarial_blocked, 41)
+        self.assertEqual(result.legitimate_total, 40)
+        self.assertEqual(result.legitimate_accepted, 40)
+        self.assertEqual(result.legitimate_false_positive_rejections, ())

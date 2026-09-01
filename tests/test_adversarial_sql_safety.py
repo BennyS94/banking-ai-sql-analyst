@@ -7,6 +7,7 @@ from backend.app.ai.groq_client import GenerationMetadata, StructuredGeneration
 from backend.app.ai.service import NLToSQLGenerationResult
 from backend.app.db.schema import ColumnSchema, DatabaseSchema, TableSchema
 from backend.app.query.service import QuerySafetyError, SafeQueryService
+from backend.app.evaluation.safety_metrics import ADVERSARIAL_SQL
 from backend.app.safety.access_policy import BankingSQLAccessPolicy
 from backend.app.safety.sql_validator import SQLASTValidator, SQLSafetyReasonCode
 
@@ -331,6 +332,9 @@ class AdversarialSQLSafetyCorpusTests(TestCase):
     def test_rejected_corpus_has_stable_ids_categories_and_reason_codes(self) -> None:
         case_ids = [case.case_id for case in REJECTED_SQL_CORPUS]
         self.assertEqual(len(case_ids), len(set(case_ids)))
+        self.assertEqual(
+            tuple(case.sql for case in REJECTED_SQL_CORPUS), ADVERSARIAL_SQL
+        )
         self.assertEqual(
             {case.category for case in REJECTED_SQL_CORPUS},
             {

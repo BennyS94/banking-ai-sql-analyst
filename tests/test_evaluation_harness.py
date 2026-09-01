@@ -34,6 +34,7 @@ from backend.app.evaluation.persistence import (
     EvaluationRunStore,
 )
 from backend.app.evaluation.runner import EvaluationRunner, build_run_metadata
+from backend.app.evaluation.safety_metrics import SafetyEvaluation
 from backend.app.safety.sql_validator import SQLASTValidator
 from backend.app.safety.access_policy import BankingSQLAccessPolicy
 from banking_data.role_management import (
@@ -288,7 +289,15 @@ class EvaluationPersistenceTests(TestCase):
     def test_result_file_serialization_and_resume(self) -> None:
         with TemporaryDirectory() as directory:
             store = EvaluationRunStore(Path(directory) / "run.json")
-            store.create(self.metadata)
+            store.create(
+                self.metadata,
+                SafetyEvaluation(
+                    adversarial_total=41,
+                    adversarial_blocked=41,
+                    legitimate_total=1,
+                    legitimate_accepted=1,
+                ),
+            )
             result = EvaluationCaseResult(
                 benchmark_id=self.case.id,
                 category=self.case.category,
@@ -311,6 +320,7 @@ class EvaluationPersistenceTests(TestCase):
             resumed = store.resume(self.metadata)
 
             self.assertEqual(resumed.metadata.run_id, "stable-run-id")
+            self.assertEqual(resumed.safety_evaluation.adversarial_blocked, 41)
             self.assertEqual([item.benchmark_id for item in resumed.cases], [self.case.id])
             with self.assertRaises(EvaluationPersistenceError):
                 store.append(result)

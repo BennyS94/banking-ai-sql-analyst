@@ -16,11 +16,13 @@ from backend.app.core.config import Settings
 from backend.app.db.engine import create_runtime_engine
 from backend.app.db.query_executor import ReadOnlyQueryExecutor
 from backend.app.evaluation.persistence import EvaluationRunStore
+from backend.app.evaluation.reporting import write_evaluation_reports
 from backend.app.evaluation.runner import (
     EvaluationRunner,
     build_run_metadata,
     fingerprint_prompt,
 )
+from backend.app.evaluation.safety_metrics import evaluate_safety_policy
 from backend.app.safety.access_policy import BankingSQLAccessPolicy
 from backend.app.safety.sql_validator import SQLASTValidator
 
@@ -77,10 +79,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             or DEFAULT_RESULTS_DIR / f"{metadata.run_id}.json"
         )
         store = EvaluationRunStore(path)
+        access_policy = BankingSQLAccessPolicy.from_engine(engine)
         if arguments.resume:
             run = store.resume(metadata)
         else:
-            run = store.create(metadata)
+            run = store.create(
+                metadata,
+                evaluate_safety_policy(cases, access_policy),
+            )
 
         executor = ReadOnlyQueryExecutor(
             engine,
@@ -93,7 +99,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 GroqStructuredGenerationClient(settings),
             ),
             SQLASTValidator(),
-            BankingSQLAccessPolicy.from_engine(engine),
+            access_policy,
             executor,
             executor,
         )
@@ -114,7 +120,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"{case.id}: {'correct' if result.case_correct else 'incorrect'} "
                 f"({len(run.cases)}/{len(cases)})"
             )
+        summary_path, report_path = write_evaluation_reports(
+            run, path.with_suffix("")
+        )
         print(f"Evaluation artifact: {path}")
+        print(f"Machine summary: {summary_path}")
+        print(f"Markdown report: {report_path}")
         return 0
     finally:
         engine.dispose()

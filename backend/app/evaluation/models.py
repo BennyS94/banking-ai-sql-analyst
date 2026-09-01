@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from backend.app.ai.benchmark import BenchmarkCategory, ComparisonMode
 from backend.app.ai.groq_client import GenerationStatus, ReasoningEffort
+from backend.app.evaluation.safety_metrics import SafetyEvaluation
 
 
 SafetyOutcome = Literal["not_applicable", "accepted", "rejected"]
@@ -72,4 +73,5 @@ class EvaluationRun(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     metadata: EvaluationRunMetadata
+    safety_evaluation: SafetyEvaluation | None = None
     cases: tuple[EvaluationCaseResult, ...] = ()

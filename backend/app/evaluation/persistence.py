@@ -14,6 +14,7 @@ from backend.app.evaluation.models import (
     EvaluationRun,
     EvaluationRunMetadata,
 )
+from backend.app.evaluation.safety_metrics import SafetyEvaluation
 
 
 class EvaluationPersistenceError(RuntimeError):
@@ -24,10 +25,17 @@ class EvaluationRunStore:
     def __init__(self, path: Path) -> None:
         self.path = path
 
-    def create(self, metadata: EvaluationRunMetadata) -> EvaluationRun:
+    def create(
+        self,
+        metadata: EvaluationRunMetadata,
+        safety_evaluation: SafetyEvaluation | None = None,
+    ) -> EvaluationRun:
         if self.path.exists():
             raise EvaluationPersistenceError("evaluation result file already exists")
-        run = EvaluationRun(metadata=metadata)
+        run = EvaluationRun(
+            metadata=metadata,
+            safety_evaluation=safety_evaluation,
+        )
         self._write(run)
         return run
 
@@ -63,7 +71,7 @@ class EvaluationRunStore:
     def _write(self, run: EvaluationRun) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = json.dumps(
-            run.model_dump(mode="json"),
+            run.model_dump(mode="json", exclude_computed_fields=True),
             ensure_ascii=False,
             indent=2,
             sort_keys=True,
